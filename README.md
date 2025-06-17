@@ -124,3 +124,35 @@ GitHub Actions pipeline that runs on every push to the main branch and pull requ
 - Deploys to staging/production if needed (configurable)
 
 ---
+
+## 📚 API Documentation
+
+### Authentication Endpoints
+- `POST /api/auth/register` - Create new account
+- `POST /api/auth/login` - User login
+- `POST /api/auth/refresh-token` - Refresh access token
+
+### User Management
+- `GET /api/users/me` - Get current user profile
+- `PUT /api/users/me` - Update user profile
+
+### Board Management
+- `POST /api/boards` - Create new board
+- `GET /api/boards` - List user's boards
+- `GET /api/boards/:id` - Get board details
+- `PUT /api/boards/:id` - Update board
+- `DELETE /api/boards/:id` - Delete board
+- `GET /api/boards/:id/stats` - Get board statistics
+
+### Task Management
+- `POST /api/boards/:boardId/tasks` - Create task
+- `GET /api/tasks/:id` - Get task details
+- `PUT /api/tasks/:id` - Update task
+- `DELETE /api/tasks/:id` - Delete task
+- `POST /api/tasks/:id/assign` - Assign task
+- `PUT /api/tasks/:id/status` - Update task status
+
+### WebSocket Events
+- `ws://localhost:3000/ws/notifications` - Real-time notifications
+
+**TaskSphere Team** 🚀

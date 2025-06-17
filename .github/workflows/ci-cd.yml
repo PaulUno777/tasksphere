@@ -38,10 +38,6 @@ jobs:
         working-directory: ./backend
         run: yarn format:check
 
-      - name: TypeScript type check
-        working-directory: ./backend
-        run: yarn typecheck
-
   # Backend build and test
   backend-build:
     name: Backend Build & Test

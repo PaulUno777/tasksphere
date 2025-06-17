@@ -24,6 +24,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "yarn"
+          cache-dependency-path: "backend/yarn.lock"
 
       - name: Install backend dependencies
         working-directory: ./backend

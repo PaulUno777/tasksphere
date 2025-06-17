@@ -100,7 +100,7 @@ jobs:
           target: production
           push: false
           load: true
-          tags: tasktphere-backend:test
+          tags: tasksphere-backend:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -110,15 +110,24 @@ jobs:
             -e NODE_ENV=test \
             -e JWT_SECRET=test-secret \
             -e JWT_REFRESH_SECRET=test-refresh-secret \
-            tasktphere-backend:test
+            tasksphere-backend:test
 
-          # Wait for container to start
-          sleep 10
+          # Wait for container to become healthy
+          for i in {1..10}; do
+            if curl -f localhost:3000/health; then
+              echo "✅ Container is up and healthy"
+              break
+            fi
+            echo "⏳ Container not ready yet, retrying in 5 seconds..."
+            sleep 5
+          done
 
-          # Test health endpoint
-          curl -f http://localhost:3000/health || exit 1
+          if ! curl -f localhost:3000/health; then
+            echo "❌ Container did not become healthy in time"
+            docker logs test-backend
+            exit 1
+          fi
 
-          # Stop container
           docker stop test-backend
 
   # Security audit

@@ -13,7 +13,6 @@ export default [
         project: './tsconfig.json',
         tsconfigRootDir: process.cwd(),
         ecmaVersion: 2022,
-        sourceType: 'module',
       },
     },
     plugins: {

@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "TaskSphere - Task Management System Backend",
   "main": "dist/app.js",
-  "type": "module",
   "scripts": {
     "test": "echo passed",
     "dev": "nodemon src/app.ts",
@@ -31,7 +30,8 @@
     "sqlite3": "^5.1.7",
     "typeorm": "^0.3.24",
     "uuid": "^11.1.0",
-    "ws": "^8.18.2"
+    "ws": "^8.18.2",
+    "zod": "^3.25.67"
   },
   "devDependencies": {
     "@eslint/migrate-config": "^1.5.1",

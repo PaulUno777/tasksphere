@@ -1,12 +1,34 @@
 import 'reflect-metadata';
 import express from 'express';
-import { config } from 'dotenv';
+import { config } from './utils/config';
+import helmet from 'helmet';
+import compression from 'compression';
+import { AppDataSource } from './utils/database';
 
-config();
 const app: express.Express = express();
-const PORT: number = Number(process.env['PORT']) || 3000;
+const PORT: number = Number(config.port) || 3000;
 
 // Security middleware
+app.use(
+  helmet({
+    crossOriginEmbedderPolicy: false,
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", 'data:', 'https:'],
+      },
+    },
+  })
+);
+
+// Body parsing middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Compression middleware
+app.use(compression());
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -23,6 +45,8 @@ app.get('/health', (_req, res) => {
 
 async function initializeApp(): Promise<void> {
   try {
+    // Initialize database
+    await AppDataSource.initialize();
     console.log('✅ Database connection established');
 
     // Start HTTP server

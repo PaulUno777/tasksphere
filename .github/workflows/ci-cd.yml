@@ -8,124 +8,82 @@ on:
 
 env:
   NODE_VERSION: "20.11.0"
-
+  GO_VERSION: "1.24.3"
 jobs:
-  # Lint and format check
-  lint-and-format:
-    name: Lint & Format Check
+  tasksphere-api-test:
+    name: Tasksphere API Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Run unit tests
+      working-directory: ./tasksphere-api
+      run: go test ./... -cover
+
+    - name: Install gosec
+      run: go install github.com/securego/gosec/v2/cmd/gosec@latest
+
+    - name: Run gosec
+      working-directory: ./tasksphere-api
+      run: gosec ./...
+
+
+  tasksphere-api-style:
+    name: Tasksphere API Style Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Check formatting
+        working-directory: ./tasksphere-api
+        run: test -z $(go fmt ./...)
+
+      - name: Install staticcheck
+        run: go install honnef.co/go/tools/cmd/staticcheck@latest
+
+      - name: Run staticcheck
+        working-directory: ./tasksphere-api
+        run: staticcheck ./...
+
+ 
+  tasksphere-api-build:
+    name: Tasksphere API Build
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Go ${{ env.GO_VERSION }}
+        uses: actions/setup-go@v5
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "yarn"
-          cache-dependency-path: "backend/yarn.lock"
+          go-version: ${{ env.GO_VERSION }}
 
-      - name: Install backend dependencies
-        working-directory: ./backend
-        run: yarn install --frozen-lockfile
+      - name: Restore Go dependencies
+        working-directory: ./tasksphere-api
+        run: go mod download
 
-      - name: Run ESLint
-        working-directory: ./backend
-        run: yarn lint
+      - name: Build Go backend
+        working-directory: ./tasksphere-api
+        run: go build -o bin/app ./cmd/main.go
 
-      - name: Check Prettier formatting
-        working-directory: ./backend
-        run: yarn format:check
-
-  # Backend build and test
-  backend-build:
-    name: Backend Build & Test
-    runs-on: ubuntu-latest
-    needs: lint-and-format
-
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x]
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: "yarn"
-          cache-dependency-path: "backend/yarn.lock"
-
-      - name: Install dependencies
-        working-directory: ./backend
-        run: yarn install --frozen-lockfile
-
-      - name: Build backend
-        working-directory: ./backend
-        run: yarn build
-
-      - name: Run tests
-        working-directory: ./backend
-        run: yarn test
-
-      - name: Upload build artifacts
+      - name: Upload Go build artifacts
         uses: actions/upload-artifact@v4
-        if: matrix.node-version == '20.x'
         with:
-          name: backend-build
-          path: ./backend/dist
-          retention-days: 7
-
-  # Security audit
-  security-audit:
-    name: Security Audit
-    runs-on: ubuntu-latest
-    needs: lint-and-format
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "yarn"
-          cache-dependency-path: "backend/yarn.lock"
-
-      - name: Install dependencies
-        working-directory: ./backend
-        run: yarn install --frozen-lockfile
-
-      - name: Run security audit
-        working-directory: ./backend
-        run: yarn audit --level moderate
-
-  # Dependency check
-  dependency-check:
-    name: Dependency Check
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "yarn"
-          cache-dependency-path: "backend/yarn.lock"
-
-      - name: Check for outdated dependencies
-        working-directory: ./backend
-        run: yarn outdated || true
-
-      - name: License check
-        working-directory: ./backend
-        run: |
-          yarn global add license-checker
-          license-checker --summary
+          name: tasksphere-api
+          path: ./tasksphere-api/bin/app
+          retention-days: 2

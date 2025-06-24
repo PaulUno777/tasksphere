@@ -21,6 +21,11 @@ func main() {
 	// MongoDB setup
 	db := config.ConnectMongo(cfg.MongoURI, cfg.MongoDatabase)
 
+	//health check
+	app.Get("health/", func(c *fiber.Ctx) error {
+		return c.SendString("OK")
+	})
+
 	// Routes
 	router.SetupRoutes(app, db)
 

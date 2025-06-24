@@ -14,7 +14,4 @@ lint:
 	golangci-lint run
 
 format:
-	gofumpt -w .
-
-# format:check:
-# 	gofumpt -l . | grep -v vendor || echo "✅ Already formatted"
+	go fmt ./...

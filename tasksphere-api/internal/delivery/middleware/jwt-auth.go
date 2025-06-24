@@ -7,6 +7,7 @@ import (
 )
 
 func JWTAuth(userRepo domain.UserRepository) fiber.Handler {
+
 	return func(c *fiber.Ctx) error {
 		authHeader := c.Get("Authorization")
 		if len(authHeader) < 8 || authHeader[:7] != "Bearer " {
@@ -14,7 +15,7 @@ func JWTAuth(userRepo domain.UserRepository) fiber.Handler {
 		}
 
 		token := authHeader[7:]
-		
+
 		payload, err := jwt.VerifyAccessToken(token)
 		if err != nil {
 			return fiber.NewError(fiber.StatusUnauthorized, "Invalid access token")

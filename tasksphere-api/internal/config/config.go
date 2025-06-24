@@ -55,8 +55,6 @@ func LoadConfig() *Config {
 		RedisPassword := getEnv("REDIS_HOST", "")
 		CacheTTLSeconds := getEnvAsInt("REDIS_HOST", 300)
 
-		
-
 		tmp := &Config{
 			Port:              port,
 			AppEnv:            AppEnv,

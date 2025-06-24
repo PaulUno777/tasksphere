@@ -42,6 +42,7 @@ jspm_packages/
 # Build outputs
 dist/
 build/
+bin/
 *.tsbuildinfo
 
 # Logs

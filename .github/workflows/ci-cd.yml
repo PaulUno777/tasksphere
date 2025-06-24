@@ -8,124 +8,109 @@ on:
 
 env:
   NODE_VERSION: "20.11.0"
-
+  GO_VERSION: "1.24.0"
 jobs:
   # Lint and format check
-  lint-and-format:
-    name: Lint & Format Check
+  go-lint-and-format:
+    name: Go Lint & Format Check
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Go ${{ env.GO_VERSION }}
+        uses: actions/setup-go@v5
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "yarn"
-          cache-dependency-path: "backend/yarn.lock"
+          go-version: ${{ env.GO_VERSION }}
 
-      - name: Install backend dependencies
-        working-directory: ./backend
-        run: yarn install
+      - name: Install linters and formatters
+        run: |
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+          go install mvdan.cc/gofumpt@latest
 
-      - name: Run ESLint
-        working-directory: ./backend
-        run: yarn lint
+      - name: Run golangci-lint
+        working-directory: ./tasktphere-api
+        run: golangci-lint run
 
-      - name: Check Prettier formatting
-        working-directory: ./backend
-        run: yarn format:check
+      - name: Check Go formatting with gofumpt
+        working-directory: ./tasktphere-api
+        run: gofumpt -l . | grep . && exit 1 || echo "✅ Code is formatted"
 
   # Backend build and test
-  backend-build:
-    name: Backend Build & Test
+  go-backend-build-test:
+    name: Go Backend Build & Test
     runs-on: ubuntu-latest
-    needs: lint-and-format
-
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x]
+    needs: go-lint-and-format
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+      - name: Set up Go ${{ env.GO_VERSION }}
+        uses: actions/setup-go@v5
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: "yarn"
-          cache-dependency-path: "backend/yarn.lock"
+          go-version: ${{ env.GO_VERSION }}
 
-      - name: Install dependencies
-        working-directory: ./backend
-        run: yarn install --frozen-lockfile
+      - name: Restore Go dependencies
+        working-directory: ./tasktphere-api
+        run: go mod download
 
-      - name: Build backend
-        working-directory: ./backend
-        run: yarn build
+      - name: Build Go backend
+        working-directory: ./tasktphere-api
+        run: go build -o bin/app ./cmd/main.go
 
-      - name: Run tests
-        working-directory: ./backend
-        run: yarn test
+      - name: Run Go tests
+        working-directory: ./tasktphere-api
+        run: go test -cover ./...
 
-      - name: Upload build artifacts
+      - name: Upload Go build artifacts
         uses: actions/upload-artifact@v4
-        if: matrix.node-version == '20.x'
         with:
           name: backend-build
-          path: ./backend/dist
+          path: ./tasktphere-api/bin/app
           retention-days: 7
 
-  # Security audit
-  security-audit:
-    name: Security Audit
+  # Security audit for Go backend
+  go-security-audit:
+    name: Go Security Audit
     runs-on: ubuntu-latest
-    needs: lint-and-format
+    needs: go-lint-and-format
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Go ${{ env.GO_VERSION }}
+        uses: actions/setup-go@v5
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "yarn"
-          cache-dependency-path: "backend/yarn.lock"
+          go-version: ${{ env.GO_VERSION }}
 
-      - name: Install dependencies
-        working-directory: ./backend
-        run: yarn install --frozen-lockfile
+      - name: Install gosec
+        run: go install github.com/securego/gosec/v2/cmd/gosec@latest
 
-      - name: Run security audit
-        working-directory: ./backend
-        run: yarn audit --level moderate
+      - name: Run gosec (Security static analysis)
+        working-directory: ./tasktphere-api
+        run: gosec ./...
 
-  # Dependency check
-  dependency-check:
-    name: Dependency Check
+  # Dependency check for Go backend
+  go-dependency-check:
+    name: Go Dependency Check
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Go ${{ env.GO_VERSION }}
+        uses: actions/setup-go@v5
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "yarn"
-          cache-dependency-path: "backend/yarn.lock"
+          go-version: ${{ env.GO_VERSION }}
 
-      - name: Check for outdated dependencies
-        working-directory: ./backend
-        run: yarn outdated || true
+      - name: Check Go modules for updates
+        working-directory: ./tasktphere-api
+        run: go list -u -m -json all
 
-      - name: License check
-        working-directory: ./backend
-        run: |
-          yarn global add license-checker
-          license-checker --summary
+      - name: Check Go module licenses
+        working-directory: ./tasktphere-api
+        run: go install github.com/google/go-licenses@latest && go-licenses check ./...

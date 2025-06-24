@@ -2,7 +2,7 @@
 
 # TaskSphere - Task Management System
 
-A full-stack, real-time collaborative task management system powered by **Go** backends, **Redis**, and a rich **Angular + NgRX + Tailwind** frontend. Designed for intelligent notifications, team-based workflows, and high performance.
+A full-stack, real-time collaborative task management system powered by **Go** backends, **Redis**, and a rich **Angular + NgRX + Tailwind** frontend. Designed for intelligent notifications, team-based workflows, and high performance (😒 just a boosted to-do list app).
 
 ---
 

@@ -30,11 +30,11 @@ jobs:
           go install mvdan.cc/gofumpt@latest
 
       - name: Run golangci-lint
-        working-directory: ./tasktphere-api
+        working-directory: ./tasksphere-api
         run: golangci-lint run
 
       - name: Check Go formatting with gofumpt
-        working-directory: ./tasktphere-api
+        working-directory: ./tasksphere-api
         run: gofumpt -l . | grep . && exit 1 || echo "✅ Code is formatted"
 
   # Backend build and test
@@ -53,22 +53,22 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
 
       - name: Restore Go dependencies
-        working-directory: ./tasktphere-api
+        working-directory: ./tasksphere-api
         run: go mod download
 
       - name: Build Go backend
-        working-directory: ./tasktphere-api
+        working-directory: ./tasksphere-api
         run: go build -o bin/app ./cmd/main.go
 
       - name: Run Go tests
-        working-directory: ./tasktphere-api
+        working-directory: ./tasksphere-api
         run: go test -cover ./...
 
       - name: Upload Go build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: backend-build
-          path: ./tasktphere-api/bin/app
+          path: ./tasksphere-api/bin/app
           retention-days: 7
 
   # Security audit for Go backend
@@ -90,7 +90,7 @@ jobs:
         run: go install github.com/securego/gosec/v2/cmd/gosec@latest
 
       - name: Run gosec (Security static analysis)
-        working-directory: ./tasktphere-api
+        working-directory: ./tasksphere-api
         run: gosec ./...
 
   # Dependency check for Go backend
@@ -108,9 +108,9 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
 
       - name: Check Go modules for updates
-        working-directory: ./tasktphere-api
+        working-directory: ./tasksphere-api
         run: go list -u -m -json all
 
       - name: Check Go module licenses
-        working-directory: ./tasktphere-api
+        working-directory: ./tasksphere-api
         run: go install github.com/google/go-licenses@latest && go-licenses check ./...

@@ -1,23 +1,17 @@
 services:
   # Backend service
-  backend:
+  tasktphere-api:
     build:
-      context: ./backend
+      context: ./tasktphere-api
       dockerfile: Dockerfile
       target: development
-    container_name: tasktphere-backend
+    container_name: tasktphere-api
     ports:
       - "3000:3000"
-    environment:
-      - NODE_ENV=development
-      - PORT=3000
-      - JWT_SECRET=your-super-secret-jwt-key-change-in-production
-      - JWT_REFRESH_SECRET=your-super-secret-refresh-key-change-in-production
-      - DATABASE_PATH=/app/data/database.sqlite
-      - CORS_ORIGINS=http://localhost:4200
+    env_file:
+      - ./tasktphere-api/.env
     volumes:
-      - ./backend:/app
-      - /app/node_modules
+      - ./tasktphere-api:/app
       - backend_data:/app/data
     networks:
       - tasktphere-network
@@ -28,6 +22,22 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+  redis:
+    image: redis:7-alpine
+    container_name: tasktphere-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - tasktphere-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # Frontend service (Angular)
   # frontend:
@@ -51,22 +61,7 @@ services:
   #   restart: unless-stopped
 
   # Redis for caching (optional, can be used instead of memory cache)
-  redis:
-    image: redis:7-alpine
-    container_name: tasktphere-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    networks:
-      - tasktphere-network
-    restart: unless-stopped
-    command: redis-server --appendonly yes
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+  
 
 volumes:
   backend_data:

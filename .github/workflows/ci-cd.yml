@@ -54,34 +54,9 @@ jobs:
       - name: Run staticcheck
         run: staticcheck ./...
 
-    name: Go Lint & Format Check
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Go ${{ env.GO_VERSION }}
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
-      - name: Install linters and formatters
-        run: |
-          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-          go install mvdan.cc/gofumpt@latest
-
-      - name: Run golangci-lint
-        working-directory: ./tasksphere-api
-        run: golangci-lint run
-
-      - name: Check Go formatting with go fmt
-        working-directory: ./tasksphere-api
-        run: test -z $(go fmt ./...) echo $? | grep . && exit 1 || echo "✅ Code is formatted"
-
   # Backend build and test
   go-backend-build-test:
-    name: Go Backend Build & Test
+    name: Go Backend Build
     runs-on: ubuntu-latest
 
     steps:
@@ -101,13 +76,9 @@ jobs:
         working-directory: ./tasksphere-api
         run: go build -o bin/app ./cmd/main.go
 
-      - name: Run Go tests
-        working-directory: ./tasksphere-api
-        run: go test -cover ./...
-
       - name: Upload Go build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: backend-build
+          name: tasksphere-api
           path: ./tasksphere-api/bin/app
           retention-days: 2

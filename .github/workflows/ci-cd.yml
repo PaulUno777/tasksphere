@@ -8,10 +8,10 @@ on:
 
 env:
   NODE_VERSION: "20.11.0"
-  GO_VERSION: "1.24.0"
+  GO_VERSION: "1.24.3"
 jobs:
   tasksphere-api-test:
-    name: Go Tests
+    name: Tasksphere API Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -33,7 +33,7 @@ jobs:
     - name: Run gosec
       working-directory: ./tasksphere-api
       run: gosec ./...
-      
+
 
   tasksphere-api-style:
     name: Tasksphere API Style Check

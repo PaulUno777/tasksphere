@@ -1,0 +1,128 @@
+<div
+  class="min-h-screen flex items-center justify-center bg-gray-100 sm:px-6 lg:px-8"
+>
+  <div class="bg-white p-4 md:p-6 rounded-md shadow-md w-full">
+    <!-- Header -->
+    <div>
+      <div
+        class="mx-auto h-12 w-12 flex items-center justify-center rounded-xl bg-primary-600"
+      >
+        <lucide-icon
+          [img]="SquareKanban"
+          class="h-8 w-8 text-white"
+        ></lucide-icon>
+      </div>
+      <h2
+        class="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900"
+      >
+        Sign in to TaskSphere
+      </h2>
+      <p class="mt-2 text-center text-sm text-gray-600">
+        Manage your projects with ease
+      </p>
+    </div>
+
+    <!-- Login Form -->
+    <form
+      [formGroup]="loginForm"
+      (ngSubmit)="onSubmit()"
+      class="mt-8 space-y-6"
+    >
+      <!-- Email Input -->
+      <div>
+        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+          Email address
+        </label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          class="input"
+          placeholder="Enter your email"
+          [class.border-danger-500]="isFieldInvalid('email')"
+        />
+        <div
+          *ngIf="isFieldInvalid('email')"
+          class="mt-1 text-sm text-danger-600"
+        >
+          Please enter a valid email address
+        </div>
+      </div>
+
+      <!-- Password Input -->
+      <div>
+        <label
+          for="password"
+          class="block text-sm font-medium text-gray-700 mb-1"
+        >
+          Password
+        </label>
+        <div class="relative">
+          <input
+            id="password"
+            [type]="showPassword() ? 'text' : 'password'"
+            formControlName="password"
+            class="input pr-10"
+            placeholder="Enter your password"
+            [class.border-danger-500]="isFieldInvalid('password')"
+          />
+          <button
+            type="button"
+            class="absolute inset-y-0 right-0 pr-3 flex items-center"
+            (click)="togglePasswordVisibility()"
+          >
+            <lucide-icon
+              [img]="passwordIcon"
+              class="h-5 w-5 text-gray-400"
+            ></lucide-icon>
+          </button>
+        </div>
+        <div
+          *ngIf="isFieldInvalid('password')"
+          class="mt-1 text-sm text-danger-600"
+        >
+          Password is required
+        </div>
+      </div>
+
+      <!-- Error Message -->
+      <div *ngIf="error()" class="rounded-md bg-danger-50 p-4">
+        <div class="flex">
+          <lucide-icon
+            [img]="AlertCircle"
+            class="h-5 w-5 text-danger-400"
+          ></lucide-icon>
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-danger-800">Sign in failed</h3>
+            <p class="mt-1 text-sm text-danger-700">{{ error() }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <app-button
+        type="submit"
+        variant="primary"
+        [fullWidth]="true"
+        size="lg"
+        [loading]="isLoading()"
+        [disabled]="loginForm.invalid"
+      >
+        Sign in
+      </app-button>
+
+      <!-- Sign up link -->
+      <div class="text-center mt-4">
+        <span class="text-sm text-gray-600">
+          Don't have an account?
+          <a
+            routerLink="/auth/register"
+            class="font-medium text-primary-600 hover:text-primary-500"
+          >
+            Sign up here
+          </a>
+        </span>
+      </div>
+    </form>
+  </div>
+</div>

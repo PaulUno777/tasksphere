@@ -1,0 +1,60 @@
+// package middleware
+
+// import (
+// 	"strings"
+
+// 	"github.com/PaulUno777/tasksphere-api/internal/infrastructure/security"
+// 	"github.com/PaulUno777/tasksphere-api/internal/pkg/errors"
+// 	"github.com/PaulUno777/tasksphere-api/internal/pkg/response"
+// 	"github.com/gofiber/fiber/v2"
+// )
+
+// func AuthMiddleware(JWTService security.JWTService) fiber.Handler {
+// 	return func(c *fiber.Ctx) error {
+// 		// Get token from Authorization header
+// 		authHeader := c.Get("Authorization")
+// 		if authHeader == "" {
+// 			return response.Error(c, errors.Unauthorized("Authorization header required"))
+// 		}
+
+// 		// Check if token starts with "Bearer "
+// 		if !strings.HasPrefix(authHeader, "Bearer ") {
+// 			return response.Error(c, errors.Unauthorized("Invalid authorization format"))
+// 		}
+
+// 		// Extract token
+// 		token := strings.TrimPrefix(authHeader, "Bearer ")
+// 		if token == "" {
+// 			return response.Error(c, errors.Unauthorized("Token required"))
+// 		}
+
+// 		// Validate token
+// 		claims, err := JWTService.ValidateAccessToken(token)
+// 		if err != nil {
+// 			return response.Error(c, err)
+// 		}
+
+// 		// Store user information in context
+// 		c.Locals("userID", claims.UserID)
+// 		c.Locals("userEmail", claims.Email)
+// 		c.Locals("userLanguage", claims.Language)
+
+// 		return c.Next()
+// 	}
+// }
+
+// func GetUserFromContext(c *fiber.Ctx) (userID, email, language string) {
+//     if uid := c.Locals("userID"); uid != nil {
+//         userID = uid.(string)
+//     }
+//     if e := c.Locals("userEmail"); e != nil {
+//         email = e.(string)
+//     }
+//     if l := c.Locals("userLanguage"); l != nil {
+//         language = l.(string)
+//     }
+//     if language == "" {
+//         language = "en" // Default fallback
+//     }
+//     return
+// }

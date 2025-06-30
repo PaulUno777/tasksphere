@@ -1,44 +1,79 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"strings"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/PaulUno777/tasksphere-api/internal/config"
-	"github.com/PaulUno777/tasksphere-api/internal/delivery/router"
-	"github.com/PaulUno777/tasksphere-api/pkg/logger"
+	"github.com/PaulUno777/tasksphere-api/internal/infrastructure/cache"
+	"github.com/PaulUno777/tasksphere-api/internal/infrastructure/database/mongodb"
+	"github.com/PaulUno777/tasksphere-api/internal/infrastructure/logger"
+	"github.com/PaulUno777/tasksphere-api/internal/interface/routes"
+	"github.com/PaulUno777/tasksphere-api/internal/pkg/errors"
+	"github.com/PaulUno777/tasksphere-api/internal/pkg/i18n"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 func main() {
-	// Init logger BEFORE everything else
-	logger.InitLogger()
 
-	cfg := config.LoadConfig()
+	// Load configuration
+	cfg := config.Load()
 
-	app := fiber.New()
+	// Initialize logger
+	log := logger.NewLogger(cfg)
+	log.Info("🚀 Starting TaskSphere Backend Server...")
 
-	app.Use(cors.New(cors.Config{
-        AllowOrigins: strings.Join(cfg.CORSOrigins, ","),
-        AllowMethods: "GET,POST,PUT,DELETE,OPTIONS",
-        AllowHeaders: "Content-Type,Authorization",
-    }))
+	// Load i18n
+	i18nManager := i18n.New()
+	if err := i18nManager.LoadLocales(); err != nil {
+		log.Fatalf("❌ Failed to load locales: %v", err)
+	}
+	log.Info("🌐 i18nManager initialized")
 
-	// MongoDB setup
-	db := config.ConnectMongo(cfg.MongoURI, cfg.MongoDatabase)
+	// Initialize MongoDB
+	db, err := mongodb.NewConnection(&cfg.Database)
+	if err != nil {
+		log.Fatalf("❌ Failed to connect to MongoDB: %v", err)
+	}
+	defer db.Disconnect()
+	log.Info("✅ MongoDB connected")
 
-	//health check
-	app.Get("health/", func(c *fiber.Ctx) error {
-		return c.SendString("OK")
+	// Initialize Redis
+	redisClient, err := cache.NewRedis(&cfg.Redis, log, 0)
+	if err != nil {
+		log.Fatalf("❌ Failed to connect to Redis: %v", err)
+	}
+	defer redisClient.Close()
+	log.Info("✅ Redis connected")
+
+	// Create Fiber app
+	app := fiber.New(fiber.Config{
+		ReadTimeout:  cfg.Server.ReadTimeout,
+		WriteTimeout: cfg.Server.WriteTimeout,
+		IdleTimeout:  cfg.Server.IdleTimeout,
+		ErrorHandler: errors.ErrorHandler(log),
 	})
 
-	// Routes
-	router.SetupRoutes(app, db)
+	// Setup routes
+	routes.Setup(app, cfg, db, redisClient, log)
 
-	// Start server
-	port := cfg.Port
-	log.Printf("Server running on http://localhost:%d", port)
-	log.Fatal(app.Listen(fmt.Sprintf(":%d", port)))
+	// Start server in goroutine
+	go func() {
+		log.Infof("🌍 Listening on port %s", cfg.Server.Port)
+		if err := app.Listen(":" + cfg.Server.Port); err != nil {
+			log.Fatalf("❌ Failed to start server: %v", err)
+		}
+	}()
+
+	// Graceful shutdown on SIGINT or SIGTERM
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Info("🛑 Shutting down server...")
+	if err := app.Shutdown(); err != nil {
+		log.Errorf("Error during shutdown: %v", err)
+	}
+	log.Info("✅ Server stopped cleanly")
 }

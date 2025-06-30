@@ -1,115 +1,176 @@
 package config
 
 import (
-	"fmt"
 	"log"
-	"os"
-	"strings"
 	"sync"
+	"time"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
 )
 
 type Config struct {
-	Port              int    `env:"PORT" validate:"required" envDefault:"3000"`
-	AppEnv            string `env:"APP_ENV" validate:"oneof=development production" envDefault:"development"`
-	CORSOrigins       []string
-	JWTSecret         string `env:"JWT_SECRET" validate:"required"`
-	JWTRefreshSecret  string `env:"JWT_REFRESH_SECRET" validate:"required"`
-	MongoURI          string `env:"MONGO_URI" validate:"required,url"`
-	MongoDatabase     string `validate:"required"`
-	RedisHost         string `validate:"required,hostname|ip"`
-	RedisPort         int    `validate:"min=1"`
-	RedisPassword     string // Optional
-	CacheTTLSeconds   int    `validate:"required,min=10"`
-	AccessExpiryMin   int    `validate:"required,min=5"` // Access Token
-	RefreshExpiryHour int    `validate:"required,min=1"` // Refresh Token
+	Server    ServerConfig    `json:"server"`
+	Database  DatabaseConfig  `json:"database"`
+	Redis     RedisConfig     `json:"redis"`
+	JWT       JWTConfig       `json:"jwt"`
+	Logging   LoggingConfig   `json:"logging"`
+	RateLimit RateLimitConfig `json:"rate_limit"`
+	WebSocket WebSocketConfig `json:"websocket"`
+	I18n      I18nConfig      `json:"i18n"`
+}
+
+// ServerConfig contains HTTP server configuration
+type ServerConfig struct {
+	Port         string        `validate:"required"`
+	Environment  string        `validate:"required,oneof=development staging production"`
+	CORSOrigins  []string      `validate:"required"`
+	ReadTimeout  time.Duration `validate:"required"`
+	WriteTimeout time.Duration `validate:"required"`
+	IdleTimeout  time.Duration `validate:"required"`
+}
+
+// DatabaseConfig contains MongoDB configuration
+type DatabaseConfig struct {
+	URI      string        `validate:"required"`
+	Database string        `validate:"required"`
+	Timeout  time.Duration `validate:"required"`
+}
+
+// RedisConfig contains Redis cache configuration
+type RedisConfig struct {
+	Host     string `validate:"required"`
+	Port     string `validate:"required"`
+	Password string
+	DB       int           `validate:"min=0"`
+	TTL      time.Duration `validate:"required"`
+}
+
+// JWTConfig contains JWT token configuration
+type JWTConfig struct {
+	Secret        string `validate:"required,min=32"`
+	RefreshSecret string `validate:"required,min=32"`
+	AccessExpiry  time.Duration
+	RefreshExpiry time.Duration
+}
+
+// LoggingConfig contains logging configuration
+type LoggingConfig struct {
+	Level      string `validate:"required,oneof=debug info warn error"`
+	Format     string `validate:"required,oneof=json console"`
+	OutputDir  string
+	MaxSize    int `validate:"min=1"`
+	MaxBackups int `validate:"min=1"`
+	MaxAge     int `validate:"min=1"`
+	Compress   bool
+}
+
+// RateLimitConfig contains rate limiting configuration
+type RateLimitConfig struct {
+	General int `validate:"min=1"`
+	Auth    int `validate:"min=1"`
+	Comment int `validate:"min=1"`
+	Window  time.Duration
+}
+
+// WebSocketConfig contains WebSocket configuration
+type WebSocketConfig struct {
+	ReadBufferSize  int `validate:"min=512"`
+	WriteBufferSize int `validate:"min=512"`
+	MaxConnections  int `validate:"min=1"`
+}
+
+type I18nConfig struct {
+	DefaultLanguage string   `validate:"required"`
+	SupportedLangs  []string `validate:"required,min=1"`
+	BundlePath      string   `validate:"required"`
 }
 
 var (
-	cfg  *Config
-	once sync.Once
+	config *Config
+	once   sync.Once
 )
 
-func LoadConfig() *Config {
+func Load() *Config {
 	once.Do(func() {
-		// Load from .env if present (dev)
 		_ = godotenv.Load()
 
-		validate := validator.New()
-		port := getEnvAsInt("PORT", 3000)
-		AppEnv := getEnv("APP_ENV", "development")
-		corsOrigins := getEnvAsSlice("CORS_ORIGINS", []string{"http://localhost:4200"})
-
-		JWTSecret := getEnv("JWT_SECRET", "")
-		JWTRefreshSecret := getEnv("JWT_REFRESH_SECRET", "")
-		AccessExpiryMin := getEnvAsInt("ACCESS_EXPIRY_MIN", 60)
-		RefreshExpiryHour := getEnvAsInt("REFRESH_EXPIRY_HOUR", 24)
-
-		mongoURI := getEnv("MONGO_URI", "")
-		MongoDatabase := getEnv("MONGO_DATABASE", "")
-
-		RedisHost := getEnv("REDIS_HOST", "")
-		RedisPort := getEnvAsInt("REDIS_HOST", 4000)
-		RedisPassword := getEnv("REDIS_HOST", "")
-		CacheTTLSeconds := getEnvAsInt("REDIS_HOST", 300)
-
 		tmp := &Config{
-			Port:              port,
-			AppEnv:            AppEnv,
-			CORSOrigins:       corsOrigins,
-			JWTSecret:         JWTSecret,
-			JWTRefreshSecret:  JWTRefreshSecret,
-			MongoURI:          mongoURI,
-			MongoDatabase:     MongoDatabase,
-			RedisHost:         RedisHost,
-			RedisPort:         RedisPort,
-			RedisPassword:     RedisPassword,
-			CacheTTLSeconds:   CacheTTLSeconds,
-			AccessExpiryMin:   AccessExpiryMin,
-			RefreshExpiryHour: RefreshExpiryHour,
+			Server: ServerConfig{
+				Port:         getEnv("PORT", "3000"),
+				Environment:  getEnv("APP_ENV", "development"),
+				CORSOrigins:  getEnvAsStringSlice("CORS_ORIGINS", []string{"http://localhost:4200"}),
+				ReadTimeout:  getEnvAsDuration("READ_TIMEOUT", 30*time.Second),
+				WriteTimeout: getEnvAsDuration("WRITE_TIMEOUT", 30*time.Second),
+				IdleTimeout:  getEnvAsDuration("IDLE_TIMEOUT", 120*time.Second),
+			},
+			Database: DatabaseConfig{
+				URI:      getEnv("MONGO_URI", "mongodb://localhost:27017"),
+				Database: getEnv("MONGO_DATABASE", "tasksphere"),
+				Timeout:  getEnvAsDuration("MONGO_TIMEOUT", 10*time.Second),
+			},
+			Redis: RedisConfig{
+				Host:     getEnv("REDIS_HOST", "localhost"),
+				Port:     getEnv("REDIS_PORT", "6379"),
+				Password: getEnv("REDIS_PASSWORD", ""),
+				DB:       getEnvAsInt("REDIS_DB", 0),
+				TTL:      getEnvAsDuration("CACHE_TTL", 5*time.Minute),
+			},
+			JWT: JWTConfig{
+				Secret:        getEnv("JWT_SECRET", ""),
+				RefreshSecret: getEnv("JWT_REFRESH_SECRET", ""),
+				AccessExpiry:  time.Duration(getEnvAsInt("ACCESS_EXPIRY_MIN", 15)) * time.Minute,
+				RefreshExpiry: time.Duration(getEnvAsInt("REFRESH_EXPIRY_HOUR", 24)) * time.Hour,
+			},
+			Logging: LoggingConfig{
+				Level:      getEnv("LOG_LEVEL", "info"),
+				Format:     getEnv("LOG_FORMAT", "json"),
+				OutputDir:  getEnv("OUTPUT_DIR", "logs"),
+				MaxSize:    getEnvAsInt("LOG_MAX_SIZE", 10),
+				MaxBackups: getEnvAsInt("LOG_MAX_BACKUPS", 3),
+				MaxAge:     getEnvAsInt("LOG_MAX_AGE", 28),
+				Compress:   getEnvAsBool("LOG_COMPRESS", true),
+			},
+			RateLimit: RateLimitConfig{
+				General: getEnvAsInt("RATE_LIMIT_GENERAL", 100),
+				Auth:    getEnvAsInt("RATE_LIMIT_AUTH", 10),
+				Comment: getEnvAsInt("RATE_LIMIT_COMMENT", 30),
+				Window:  getEnvAsDuration("RATE_LIMIT_WINDOW", 5*time.Minute),
+			},
+			WebSocket: WebSocketConfig{
+				ReadBufferSize:  getEnvAsInt("WS_READ_BUFFER_SIZE", 1024),
+				WriteBufferSize: getEnvAsInt("WS_WRITE_BUFFER_SIZE", 1024),
+				MaxConnections:  getEnvAsInt("WS_MAX_CONNECTIONS", 1000),
+			},
+			I18n: I18nConfig{
+				DefaultLanguage: getEnv("DEFAULT_LANGUAGE", "en"),
+				SupportedLangs:  getEnvAsStringSlice("SUPPORTED_LANGUAGES", []string{"en", "fr"}),
+				BundlePath:      getEnv("BUNDLE_PATH", "locales"),
+			},
 		}
 
 		// Validate using struct tags
-		if err := validate.Struct(tmp); err != nil {
+		if err := tmp.Validate(); err != nil {
 			log.Fatalf("Invalid config: %v", err)
 		}
-		cfg = tmp
+		config = tmp
 	})
-	return cfg
+	return config
 }
 
-// --- Utilities ---
-
-func getEnv(key, fallback string) string {
-	if val, ok := os.LookupEnv(key); ok {
-		return val
+// Get returns the global configuration instance
+func Get() *Config {
+	if config == nil {
+		return Load()
 	}
-	return fallback
+	return config
 }
 
-func getEnvAsInt(key string, fallback int) int {
-	valStr := getEnv(key, "")
-	if valStr == "" {
-		return fallback
-	}
-	var val int
-	_, err := fmt.Sscanf(valStr, "%d", &val)
-	if err != nil {
-		return fallback
-	}
-	return val
+// IsDevelopment returns true if the application is running in development mode
+func (c *Config) IsDevelopment() bool {
+	return c.Server.Environment == "development"
 }
 
-func getEnvAsSlice(key string, fallback []string) []string {
-	valStr := getEnv(key, "")
-	if valStr == "" {
-		return fallback
-	}
-	parts := strings.Split(valStr, ",")
-	for i, v := range parts {
-		parts[i] = strings.TrimSpace(v)
-	}
-	return parts
+// IsProduction returns true if the application is running in production mode
+func (c *Config) IsProduction() bool {
+	return c.Server.Environment == "production"
 }

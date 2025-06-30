@@ -5,7 +5,7 @@ WORKDIR /app
 
 RUN apk add --no-cache git curl
 
-RUN go install github.com/cosmtrek/air@latest
+RUN go install github.com/air-verse/air@latest
 
 COPY go.mod go.sum ./
 

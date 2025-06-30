@@ -1,20 +1,20 @@
 services:
   # Backend service
-  tasktphere-api:
+  tasksphere-api:
     build:
-      context: ./tasktphere-api
+      context: ./tasksphere-api
       dockerfile: Dockerfile
       target: development
-    container_name: tasktphere-api
+    container_name: tasksphere-api
     ports:
       - "3000:3000"
     env_file:
-      - ./tasktphere-api/.env
+      - ./tasksphere-api/.env
     volumes:
-      - ./tasktphere-api:/app
+      - ./tasksphere-api:/app
       - backend_data:/app/data
     networks:
-      - tasktphere-network
+      - tasksphere-network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
@@ -24,13 +24,13 @@ services:
       start_period: 40s
   redis:
     image: redis:7-alpine
-    container_name: tasktphere-redis
+    container_name: tasksphere-redis
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     networks:
-      - tasktphere-network
+      - tasksphere-network
     restart: unless-stopped
     command: redis-server --appendonly yes
     healthcheck:
@@ -45,7 +45,7 @@ services:
   #     context: ./frontend
   #     dockerfile: Dockerfile
   #     target: development
-  #   container_name: tasktphere-frontend
+  #   container_name: tasksphere-frontend
   #   ports:
   #     - "4200:4200"
   #   environment:
@@ -55,7 +55,7 @@ services:
   #     - ./frontend:/app
   #     - /app/node_modules
   #   networks:
-  #     - tasktphere-network
+  #     - tasksphere-network
   #   depends_on:
   #     - backend
   #   restart: unless-stopped
@@ -70,5 +70,5 @@ volumes:
     driver: local
 
 networks:
-  tasktphere-network:
+  tasksphere-network:
     driver: bridge

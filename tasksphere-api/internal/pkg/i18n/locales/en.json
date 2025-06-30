@@ -1,0 +1,28 @@
+{
+  "errors": {
+    "validation_failed": "Validation failed",
+    "unauthorized": "Unauthorized access",
+    "forbidden": "Access forbidden",
+    "not_found": "Resource not found",
+    "internal_error": "Internal server error",
+    "invalid_credentials": "Invalid email or password",
+    "email_already_exists": "Email already exists",
+    "token_expired": "Token has expired",
+    "invalid_token": "Invalid token"
+  },
+  "messages": {
+    "user_created": "User account created successfully",
+    "login_successful": "Login successful",
+    "logout_successful": "Logout successful",
+    "task_created": "Task created successfully",
+    "task_updated": "Task updated successfully",
+    "task_deleted": "Task deleted successfully",
+    "board_created": "Board created successfully"
+  },
+  "validation": {
+    "required": "This field is required",
+    "email_format": "Please enter a valid email address",
+    "min_length": "Minimum length is {{.Min}} characters",
+    "max_length": "Maximum length is {{.Max}} characters"
+  }
+}

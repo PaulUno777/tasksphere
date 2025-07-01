@@ -1,15 +1,18 @@
 package entities
 
 import (
+	"time"
+
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 type BoardMember struct {
 	Base `bson:",inline"`
 
-	UserID  bson.ObjectID `bson:"userId" json:"userId" validate:"required"`
-	BoardID bson.ObjectID `bson:"boardId" json:"boardId" validate:"required"`
-	Role    BoardRole     `bson:"role" json:"role" validate:"required,oneof=ADMIN EDITOR VIEWER"`
+	UserID   bson.ObjectID `bson:"userId"`
+	BoardID  bson.ObjectID `bson:"boardId"`
+	Role     BoardRole     `bson:"role"`
+	JoinedAt time.Time     `bson:"joinedAt"`
 }
 
 func (bm *BoardMember) IsAdmin() bool {

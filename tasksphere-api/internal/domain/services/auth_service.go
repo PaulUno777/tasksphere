@@ -3,34 +3,36 @@ package services
 import (
 	"context"
 
-	"github.com/PaulUno777/tasksphere-api/internal/domain/entities"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-type AuthTokens struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
+type TokenClaims struct {
+	UserID    bson.ObjectID `json:"userId"`
+	Email     string        `json:"email"`
+	Language  string        `json:"language"`
+	ExpiresAt int64         `json:"exp"`
+	IssuedAt  int64         `json:"iat"`
 }
 
-type LoginRequest struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required"`
+type OAuthService interface {
+	GetGoogleAuthURL(state string) string
+	ExchangeGoogleCode(ctx context.Context, code string) (*GoogleUserInfo, error)
 }
 
-type RegisterRequest struct {
-	Email     string `json:"email" validate:"required,email"`
-	FirstName string `json:"first_name" validate:"required,min=1,max=100"`
-	LastName  string `json:"last_name" validate:"required,min=1,max=100"`
-	Password  string `json:"password" validate:"required,min=8"`
-}
-
-type RefreshTokenRequest struct {
-	RefreshToken string `json:"refresh_token" validate:"required"`
+type GoogleUserInfo struct {
+	ID            string `json:"id"`
+	Email         string `json:"email"`
+	FirstName     string `json:"given_name"`
+	LastName      string `json:"family_name"`
+	Picture       string `json:"picture"`
+	EmailVerified bool   `json:"email_verified"`
 }
 
 type AuthService interface {
-	Register(ctx context.Context, req *RegisterRequest) (*entities.User, *AuthTokens, error)
-	Login(ctx context.Context, req *LoginRequest) (*entities.User, *AuthTokens, error)
-	RefreshTokens(ctx context.Context, req *RefreshTokenRequest) (*AuthTokens, error)
-	Logout(ctx context.Context, userID bson.ObjectID) error
+	HashPassword(password string) (string, error)
+	VerifyPassword(hashedPassword, password string) error
+	GenerateTokens(userID, email, language string) (accessToken, refreshToken string, err error)
+	ValidateAccessToken(token string) (*TokenClaims, error)
+	ValidateRefreshToken(token string) (*TokenClaims, error)
+	RefreshTokens(refreshToken string) (accessToken, newRefreshToken string, err error)
 }

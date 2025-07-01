@@ -1,0 +1,30 @@
+{
+  "messages": {
+    "user_registered": "User registered successfully",
+    "user_logged_in": "User logged in successfully",
+    "tokens_refreshed": "Tokens refreshed successfully",
+    "profile_updated": "Profile updated successfully",
+    "password_updated": "Password updated successfully",
+    "google_auth_success": "Google authentication successful"
+  },
+  "errors": {
+    "internal_error": "Internal server error",
+    "email_already_exists": "Email already exists",
+    "invalid_credentials": "Invalid email or password",
+    "account_deactivated": "Account has been deactivated",
+    "invalid_token": "Invalid or expired token",
+    "invalid_google_code": "Invalid Google authorization code",
+    "user_not_found": "User not found",
+    "invalid_current_password": "Current password is incorrect",
+    "validation_error": "Validation error"
+  },
+  "validation": {
+    "required": "{{.Field}} is required",
+    "email": "{{.Field}} must be a valid email address",
+    "min": "{{.Field}} must be at least {{.Param}} characters long",
+    "max": "{{.Field}} must be at most {{.Param}} characters long",
+    "password": "{{.Field}} must contain at least 8 characters including uppercase, lowercase, number, and special character",
+    "oneof": "{{.Field}} must be one of: {{.Param}}",
+    "invalid": "{{.Field}} is invalid"
+  }
+}

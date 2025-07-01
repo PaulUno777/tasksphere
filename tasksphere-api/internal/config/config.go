@@ -9,21 +9,22 @@ import (
 )
 
 type Config struct {
-	Server    ServerConfig    `json:"server"`
-	Database  DatabaseConfig  `json:"database"`
-	Redis     RedisConfig     `json:"redis"`
-	JWT       JWTConfig       `json:"jwt"`
-	Logging   LoggingConfig   `json:"logging"`
-	RateLimit RateLimitConfig `json:"rate_limit"`
-	WebSocket WebSocketConfig `json:"websocket"`
-	I18n      I18nConfig      `json:"i18n"`
+	Server      ServerConfig      `json:"server"`
+	Database    DatabaseConfig    `json:"database"`
+	Redis       RedisConfig       `json:"redis"`
+	JWT         JWTConfig         `json:"jwt"`
+	GoogleOAuth GoogleOAuthConfig `json:"googleOAuth"`
+	Logging     LoggingConfig     `json:"logging"`
+	RateLimit   RateLimitConfig   `json:"rate_limit"`
+	WebSocket   WebSocketConfig   `json:"websocket"`
+	I18n        I18nConfig        `json:"i18n"`
 }
 
 // ServerConfig contains HTTP server configuration
 type ServerConfig struct {
 	Port         string        `validate:"required"`
 	Environment  string        `validate:"required,oneof=development staging production"`
-	CORSOrigins  []string      `validate:"required"`
+	CORSOrigins  []string      
 	ReadTimeout  time.Duration `validate:"required"`
 	WriteTimeout time.Duration `validate:"required"`
 	IdleTimeout  time.Duration `validate:"required"`
@@ -51,6 +52,13 @@ type JWTConfig struct {
 	RefreshSecret string `validate:"required,min=32"`
 	AccessExpiry  time.Duration
 	RefreshExpiry time.Duration
+}
+
+// JWTConfig contains JWT token configuration
+type GoogleOAuthConfig struct {
+	ClientID     string `validate:"required"`
+	ClientSecret string `validate:"required"`
+	RedirectURL  string `validate:"required"`
 }
 
 // LoggingConfig contains logging configuration
@@ -120,6 +128,11 @@ func Load() *Config {
 				RefreshSecret: getEnv("JWT_REFRESH_SECRET", ""),
 				AccessExpiry:  time.Duration(getEnvAsInt("ACCESS_EXPIRY_MIN", 15)) * time.Minute,
 				RefreshExpiry: time.Duration(getEnvAsInt("REFRESH_EXPIRY_HOUR", 24)) * time.Hour,
+			},
+			GoogleOAuth: GoogleOAuthConfig{
+				ClientID:     getEnv("GOOGLE_CLIENT_ID", ""),
+				ClientSecret: getEnv("GOOGLE_CLIENT_SECRET", ""),
+				RedirectURL:  getEnv("GOOGLE_REDIRECT_URL", ""),
 			},
 			Logging: LoggingConfig{
 				Level:      getEnv("LOG_LEVEL", "info"),

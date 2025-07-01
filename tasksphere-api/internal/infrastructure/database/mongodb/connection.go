@@ -14,7 +14,7 @@ import (
 type Connection struct {
 	Client   *mongo.Client
 	Database *mongo.Database
-	timeout  time.Duration
+	Timeout  time.Duration
 }
 
 func NewConnection(cfg *config.DatabaseConfig) (*Connection, error) {
@@ -47,7 +47,7 @@ func NewConnection(cfg *config.DatabaseConfig) (*Connection, error) {
 	mongoDB := &Connection{
 		Client:   client,
 		Database: database,
-		timeout:  cfg.Timeout,
+		Timeout:  cfg.Timeout,
 	}
 
 	// Create indexes
@@ -67,7 +67,7 @@ func (c *Connection) Disconnect() error {
 
 // WithTimeout creates a context with the configured timeout
 func (c *Connection) WithTimeout() (context.Context, context.CancelFunc) {
-	return context.WithTimeout(context.Background(), c.timeout)
+	return context.WithTimeout(context.Background(), c.Timeout)
 }
 
 // GetCollection returns a collection by name
@@ -82,12 +82,6 @@ func (c *Connection) createIndexes(ctx context.Context) error {
 		{
 			Keys:    map[string]int{"email": 1},
 			Options: options.Index().SetUnique(true),
-		},
-		{
-			Keys: map[string]int{"createdAt": 1},
-		},
-		{
-			Keys: map[string]int{"isActive": 1},
 		},
 	}
 	if _, err := userCollection.Indexes().CreateMany(ctx, userIndexes); err != nil {

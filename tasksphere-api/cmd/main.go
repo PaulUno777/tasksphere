@@ -8,10 +8,12 @@ import (
 	"github.com/PaulUno777/tasksphere-api/internal/config"
 	"github.com/PaulUno777/tasksphere-api/internal/infrastructure/cache"
 	"github.com/PaulUno777/tasksphere-api/internal/infrastructure/database/mongodb"
+	"github.com/PaulUno777/tasksphere-api/internal/infrastructure/i18n"
 	"github.com/PaulUno777/tasksphere-api/internal/infrastructure/logger"
-	"github.com/PaulUno777/tasksphere-api/internal/interface/routes"
+	"github.com/PaulUno777/tasksphere-api/internal/interface/http/routes"
+
+	// "github.com/PaulUno777/tasksphere-api/internal/interface/routes"
 	"github.com/PaulUno777/tasksphere-api/internal/pkg/errors"
-	"github.com/PaulUno777/tasksphere-api/internal/pkg/i18n"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -25,11 +27,11 @@ func main() {
 	log.Info("🚀 Starting TaskSphere Backend Server...")
 
 	// Load i18n
-	i18nManager := i18n.New()
-	if err := i18nManager.LoadLocales(); err != nil {
-		log.Fatalf("❌ Failed to load locales: %v", err)
+	i18nService, err := i18n.Load()
+	if err != nil {
+		log.Fatalf("❌ Failed to load service: %v", err)
 	}
-	log.Info("🌐 i18nManager initialized")
+	log.Info("🌐 i18n service initialized")
 
 	// Initialize MongoDB
 	db, err := mongodb.NewConnection(&cfg.Database)
@@ -55,8 +57,8 @@ func main() {
 		ErrorHandler: errors.ErrorHandler(log),
 	})
 
-	// Setup routes
-	routes.Setup(app, cfg, db, redisClient, log)
+	//Setup routes
+	routes.Setup(app, cfg, db, redisClient, log, i18nService)
 
 	// Start server in goroutine
 	go func() {

@@ -6,17 +6,21 @@ import (
 )
 
 // ErrorHandler handles application errors and returns appropriate HTTP responses
-func ErrorHandler(logger *logger.Logger) fiber.ErrorHandler {
+func ErrorHandler(log *logger.Logger) fiber.ErrorHandler {
 	return func(c *fiber.Ctx, err error) error {
-		// Check if it's an AppError
+		path := c.Path()
+		method := c.Method()
+
+		// Handle custom AppError
 		if appErr, ok := err.(*AppError); ok {
-			logger.Error("Application error",
-				"code", appErr.Code,
-				"message", appErr.Message,
-				"status", appErr.Status,
-				"path", c.Path(),
-				"method", c.Method(),
-			)
+			log.WithFields(map[string]interface{}{
+				"error_type": "AppError",
+				"code":       appErr.Code,
+				"message":    appErr.Message,
+				"status":     appErr.Status,
+				"path":       path,
+				"method":     method,
+			}).Errorf("Error: %v", appErr.Err)
 
 			return c.Status(appErr.Status).JSON(fiber.Map{
 				"error": fiber.Map{
@@ -26,14 +30,15 @@ func ErrorHandler(logger *logger.Logger) fiber.ErrorHandler {
 			})
 		}
 
-		// Handle Fiber errors
+		// Handle Fiber built-in errors
 		if fiberErr, ok := err.(*fiber.Error); ok {
-			logger.Error("Fiber error",
-				"code", fiberErr.Code,
-				"message", fiberErr.Message,
-				"path", c.Path(),
-				"method", c.Method(),
-			)
+			log.WithFields(map[string]interface{}{
+				"error_type": "FiberError",
+				"code":       fiberErr.Code,
+				"message":    fiberErr.Message,
+				"path":       path,
+				"method":     method,
+			}).Errorf("Error: %v", fiberErr.Error())
 
 			return c.Status(fiberErr.Code).JSON(fiber.Map{
 				"error": fiber.Map{
@@ -43,12 +48,13 @@ func ErrorHandler(logger *logger.Logger) fiber.ErrorHandler {
 			})
 		}
 
-		// Handle unexpected errors
-		logger.Error("Unexpected error",
-			"error", err.Error(),
-			"path", c.Path(),
-			"method", c.Method(),
-		)
+		// Handle unexpected/unwrapped errors
+		log.WithFields(map[string]interface{}{
+			"error_type": "Internal",
+			"message":    err.Error(),
+			"path":       path,
+			"method":     method,
+		}).Errorf("Error: %v", err)
 
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": fiber.Map{

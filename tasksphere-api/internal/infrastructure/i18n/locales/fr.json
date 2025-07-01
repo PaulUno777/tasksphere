@@ -1,0 +1,30 @@
+{
+  "messages": {
+    "user_registered": "Utilisateur enregistré avec succès",
+    "user_logged_in": "Utilisateur connecté avec succès",
+    "tokens_refreshed": "Jetons actualisés avec succès",
+    "profile_updated": "Profil mis à jour avec succès",
+    "password_updated": "Mot de passe mis à jour avec succès",
+    "google_auth_success": "Authentification Google réussie"
+  },
+  "errors": {
+    "internal_error": "Erreur interne du serveur",
+    "email_already_exists": "L'email existe déjà",
+    "invalid_credentials": "Email ou mot de passe invalide",
+    "account_deactivated": "Le compte a été désactivé",
+    "invalid_token": "Jeton invalide ou expiré",
+    "invalid_google_code": "Code d'autorisation Google invalide",
+    "user_not_found": "Utilisateur non trouvé",
+    "invalid_current_password": "Le mot de passe actuel est incorrect",
+    "validation_error": "Erreur de validation"
+  },
+  "validation": {
+  "required": "{{.Field}} est requis",
+  "email": "{{.Field}} doit être une adresse e-mail valide",
+  "min": "{{.Field}} doit contenir au moins {{.Param}} caractères",
+  "max": "{{.Field}} doit contenir au maximum {{.Param}} caractères",
+  "password": "{{.Field}} doit contenir au moins 8 caractères, incluant une majuscule, une minuscule, un chiffre et un caractère spécial",
+  "oneof": "{{.Field}} doit être l’un des suivants : {{.Param}}",
+  "invalid": "{{.Field}} est invalide"
+}
+}

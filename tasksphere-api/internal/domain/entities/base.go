@@ -7,7 +7,15 @@ import (
 )
 
 type Base struct {
-	ID        bson.ObjectID `bson:"_id,omitempty" json:"id"`
-	CreatedAt time.Time     `bson:"createdAt" json:"createdAt"`
-	UpdatedAt time.Time     `bson:"updatedAt" json:"updatedAt"`
+	ID        bson.ObjectID `bson:"_id,omitempty"`
+	CreatedAt time.Time     `bson:"createdAt"`
+	UpdatedAt time.Time     `bson:"updatedAt"`
+}
+
+func NewBase() *Base {
+	return &Base{
+		ID:        bson.NewObjectID(),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
 }

@@ -1,9 +1,5 @@
 package entities
 
-import (
-	"go.mongodb.org/mongo-driver/v2/bson"
-)
-
 type User struct {
 	*Base `bson:",inline"`
 
@@ -13,13 +9,21 @@ type User struct {
 	PasswordHash string `bson:"passwordHash"`
 	RefreshToken string `bson:"refreshToken,omitempty"`
 	Language     string `bson:"language,omitempty"`
-	IsActive     bool   `bson:"isActive"`
+	AvatarURL    string `bson:"avatarURL,omitempty"`
 
-	Comments      []bson.ObjectID `bson:"comments,omitempty"`
-	BoardMembers  []bson.ObjectID `bson:"boardMembers,omitempty"`
-	Notifications []bson.ObjectID `bson:"notifications,omitempty"`
+	IsActive        bool `bson:"isActive"`
+	IsEmailVerified bool `bson:"isEmailVerified"`
 }
 
 func (u *User) GetFullName() string {
 	return u.FirstName + " " + u.LastName
+}
+
+func (u *User) IsValidLanguage(supportedLangs []string) bool {
+	for _, lang := range supportedLangs {
+		if u.Language == lang {
+			return true
+		}
+	}
+	return false
 }

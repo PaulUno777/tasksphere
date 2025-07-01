@@ -1,10 +1,11 @@
-package validator
+package utils
 
 import (
 	"errors"
 	"reflect"
 	"strings"
 
+	"github.com/PaulUno777/tasksphere-api/internal/infrastructure/i18n"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 )
@@ -19,30 +20,30 @@ func init() {
 }
 
 // ValidateStruct validates a struct and returns formatted errors
-func ValidateStruct(s interface{}) error {
+func ValidateStruct(s interface{}, lang string) error {
 	if err := validate.Struct(s); err != nil {
-		return formatValidationErrors(err)
+		return formatValidationErrors(err, lang)
 	}
 	return nil
 }
 
 // ParseAndValidate parses request body and validates it
-func ParseAndValidate(c *fiber.Ctx, dest interface{}) error {
+func ParseAndValidate(c *fiber.Ctx, dest interface{}, lang string) error {
 	if err := c.BodyParser(dest); err != nil {
 		return errors.New("invalid request body")
 	}
 
-	return ValidateStruct(dest)
+	return ValidateStruct(dest, lang)
 }
 
 // formatValidationErrors formats validation errors into readable messages
-func formatValidationErrors(err error) error {
+func formatValidationErrors(err error, lang string) error {
 	var messages []string
 
 	if validationErrors, ok := err.(validator.ValidationErrors); ok {
 		for _, e := range validationErrors {
 			field := getJSONFieldName(e)
-			message := getValidationMessage(field, e)
+			message := getValidationMessage(field, e, lang)
 			messages = append(messages, message)
 		}
 	}
@@ -76,22 +77,29 @@ func getJSONFieldName(e validator.FieldError) string {
 }
 
 // getValidationMessage returns a user-friendly validation message
-func getValidationMessage(field string, e validator.FieldError) string {
+func getValidationMessage(field string, e validator.FieldError, lang string) string {
+	i18n := i18n.Get()
+
+	template := map[string]interface{}{
+		"Field": field,
+		"Param": e.Param(),
+	}
+
 	switch e.Tag() {
 	case "required":
-		return field + " is required"
+		return i18n.T(lang, "validation.required", template)
 	case "email":
-		return field + " must be a valid email address"
+		return i18n.T(lang, "validation.email", template)
 	case "min":
-		return field + " must be at least " + e.Param() + " characters long"
+		return i18n.T(lang, "validation.min", template)
 	case "max":
-		return field + " must be at most " + e.Param() + " characters long"
+		return i18n.T(lang, "validation.max", template)
 	case "password":
-		return field + " must contain at least 8 characters with uppercase, lowercase, number and special character"
+		return i18n.T(lang, "validation.password", template)
 	case "oneof":
-		return field + " must be one of: " + e.Param()
+		return i18n.T(lang, "validation.oneof", template)
 	default:
-		return field + " is invalid"
+		return i18n.T(lang, "validation.invalid", template)
 	}
 }
 

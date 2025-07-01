@@ -24,11 +24,6 @@ func NewUserRepository(db *Connection) repositories.UserRepository {
 }
 
 func (r *userRepository) Create(ctx context.Context, user *entities.User) error {
-	user.ID = bson.NewObjectID()
-	user.CreatedAt = time.Now()
-	user.UpdatedAt = time.Now()
-	user.IsActive = true
-
 	_, err := r.collection.InsertOne(ctx, user)
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
@@ -68,6 +63,28 @@ func (r *userRepository) Update(ctx context.Context, user *entities.User) error 
 
 	filter := bson.M{"_id": user.ID}
 	update := bson.M{"$set": user}
+
+	result, err := r.collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return err
+	}
+
+	if result.MatchedCount == 0 {
+		return errors.New("user not found")
+	}
+
+	return nil
+}
+
+// UpdateRefreshToken implements repositories.UserRepository.
+func (r *userRepository) UpdateRefreshToken(ctx context.Context, userID bson.ObjectID, refreshToken string) error {
+	filter := bson.M{"_id": userID}
+	update := bson.M{
+		"$set": bson.M{
+			"refreshToken": refreshToken,
+			"updatedAt":    time.Now(),
+		},
+	}
 
 	result, err := r.collection.UpdateOne(ctx, filter, update)
 	if err != nil {

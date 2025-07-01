@@ -12,6 +12,7 @@ type UserRepository interface {
 	GetByID(ctx context.Context, id bson.ObjectID) (*entities.User, error)
 	GetByEmail(ctx context.Context, email string) (*entities.User, error)
 	Update(ctx context.Context, user *entities.User) error
+	UpdateRefreshToken(ctx context.Context, userID bson.ObjectID, refreshToken string) error
 	Delete(ctx context.Context, id bson.ObjectID) error
 	List(ctx context.Context, limit, offset int) ([]*entities.User, error)
 }

@@ -40,20 +40,21 @@ const (
 	PriorityHigh   Priority = "HIGH"
 )
 
+
 type TaskStatus string
 
 const (
-	Todo       TaskStatus = "TODO"
-	InProgress TaskStatus = "IN_PROGRESS"
-	Review     TaskStatus = "REVIEW"
-	Completed  TaskStatus = "COMPLETED"
-	Archived   TaskStatus = "ARCHIVED"
+	TaskStatusTodo       TaskStatus = "TODO"
+	TaskStatusInProgress TaskStatus = "IN_PROGRESS"
+	TaskStatusReview     TaskStatus = "REVIEW"
+	TaskStatusCompleted  TaskStatus = "COMPLETED"
+	TaskStatusArchived   TaskStatus = "ARCHIVED"
 )
 
 type BoardRole string
 
 const (
-	AdminRole  BoardRole = "ADMIN"
-	EditorRole BoardRole = "EDITOR"
-	ViewerRole BoardRole = "VIEWER"
+	BoardRoleAdmin  BoardRole = "ADMIN"
+	BoardRoleEditor BoardRole = "EDITOR"
+	BoardRoleViewer BoardRole = "VIEWER"
 )

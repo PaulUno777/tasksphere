@@ -19,3 +19,11 @@ func NewBase() *Base {
 		UpdatedAt: time.Now(),
 	}
 }
+
+func (b *Base) GetID() string {
+	return b.ID.Hex()
+}
+
+func (b *Base) UpdateTimestamp() {
+	b.UpdatedAt = time.Now()
+}

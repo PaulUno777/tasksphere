@@ -21,16 +21,13 @@ type TaskFilter struct {
 }
 
 type TaskRepository interface {
-	Create(ctx context.Context, task *entities.Task) error
+	Create(ctx context.Context, task *entities.Task) (*entities.Task, error)
 	GetByID(ctx context.Context, id bson.ObjectID) (*entities.Task, error)
+	GetByBoardID(ctx context.Context, boardID bson.ObjectID, filter *TaskFilter, page, limit int) ([]*entities.Task, int64, error)
 	Update(ctx context.Context, task *entities.Task) error
 	Delete(ctx context.Context, id bson.ObjectID) error
-	GetByBoard(ctx context.Context, boardID bson.ObjectID, limit, offset int) ([]*entities.Task, error)
-	GetByFilter(ctx context.Context, filter *TaskFilter, limit, offset int) ([]*entities.Task, error)
-	GetOverdueTasks(ctx context.Context) ([]*entities.Task, error)
-	CountByBoard(ctx context.Context, boardID bson.ObjectID) (int64, error)
-	CountByStatus(ctx context.Context, boardID bson.ObjectID, status entities.TaskStatus) (int64, error)
-	GetTaskStats(ctx context.Context, boardID bson.ObjectID) (map[entities.TaskStatus]int64, error)
-	UpdateAssignee(ctx context.Context, taskID bson.ObjectID, assigneeID *bson.ObjectID, updatedBy bson.ObjectID) error
-	UpdateStatus(ctx context.Context, taskID bson.ObjectID, status entities.TaskStatus, updatedBy bson.ObjectID) error
+	UpdateStatus(ctx context.Context, id bson.ObjectID, status entities.TaskStatus, updatedBy bson.ObjectID) error
+	AssignTask(ctx context.Context, id, assigneeID bson.ObjectID, updatedBy bson.ObjectID) error
+	GetOverdueTasks(ctx context.Context, boardID bson.ObjectID) ([]*entities.Task, error)
+	CountByStatus(ctx context.Context, boardID bson.ObjectID) (map[string]int64, error)
 }

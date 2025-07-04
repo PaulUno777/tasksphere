@@ -1,0 +1,371 @@
+package task
+
+import (
+	"context"
+	"time"
+
+	"github.com/PaulUno777/tasksphere-api/internal/domain/entities"
+	"github.com/PaulUno777/tasksphere-api/internal/domain/repositories"
+	"github.com/PaulUno777/tasksphere-api/internal/domain/services"
+	"github.com/PaulUno777/tasksphere-api/internal/infrastructure/i18n"
+	"github.com/PaulUno777/tasksphere-api/internal/interface/http/dto"
+	"github.com/PaulUno777/tasksphere-api/internal/pkg/errors"
+	"github.com/PaulUno777/tasksphere-api/internal/pkg/utils"
+	"go.mongodb.org/mongo-driver/v2/bson"
+)
+
+type UseCase struct {
+	taskRepo        repositories.TaskRepository
+	boardMemberRepo repositories.BoardMemberRepository
+	categoryRepo    repositories.CategoryRepository
+	userRepo        repositories.UserRepository
+	localizer       services.I18nService
+}
+
+// NewUseCase creates a new task use case
+func NewUseCase(
+	taskRepo repositories.TaskRepository,
+	boardMemberRepo repositories.BoardMemberRepository,
+	categoryRepo repositories.CategoryRepository,
+	userRepo repositories.UserRepository,
+) *UseCase {
+	return &UseCase{
+		taskRepo:        taskRepo,
+		boardMemberRepo: boardMemberRepo,
+		categoryRepo:    categoryRepo,
+		userRepo:        userRepo,
+		localizer:       i18n.Get(),
+	}
+}
+
+// CreateTask creates a new task
+func (uc *UseCase) CreateTask(ctx context.Context, userID, boardID bson.ObjectID, req *dto.CreateTaskRequest, lang string) (*dto.TaskResponse, error) {
+	// Check permissions (EDITOR or ADMIN can create tasks)
+	role, err := uc.boardMemberRepo.GetUserRole(ctx, boardID, userID)
+	if err != nil || (role != entities.BoardRoleAdmin && role != entities.BoardRoleEditor) {
+		return nil, errors.NewForbiddenError(uc.localizer.T(lang, "errors.insufficient_permissions"))
+	}
+
+	task := &entities.Task{
+		Base:        entities.NewBase(),
+		Title:       req.Title,
+		Description: req.Description,
+		Status:      entities.TaskStatusTodo,
+		Priority:    entities.Priority(req.Priority),
+		BoardID:     boardID,
+	}
+
+	// Parse due date if provided
+	if req.DueDate != "" {
+		dueDate, err := time.Parse(time.RFC3339, req.DueDate)
+		if err != nil {
+			return nil, errors.NewBadRequestError(uc.localizer.T(lang, "errors.invalid_due_date"))
+		}
+		task.DueDate = &dueDate
+	}
+
+	// Set category if provided
+	if req.CategoryID != "" {
+		categoryID, err := bson.ObjectIDFromHex(req.CategoryID)
+		if err != nil {
+			return nil, errors.NewBadRequestError(uc.localizer.T(lang, "errors.invalid_category_id"))
+		}
+
+		// Verify category belongs to board
+		category, err := uc.categoryRepo.GetByID(ctx, categoryID)
+		if err != nil || category.BoardID != boardID {
+			return nil, errors.NewBadRequestError(uc.localizer.T(lang, "errors.category_not_found"))
+		}
+		task.CategoryID = &categoryID
+	}
+
+	createdTask, err := uc.taskRepo.Create(ctx, task)
+	if err != nil {
+		return nil, errors.NewInternalServerError(uc.localizer.T(lang, "errors.internal_error"), err)
+	}
+
+	return uc.mapTaskToResponse(ctx, createdTask), nil
+}
+
+// GetTasks gets tasks for a board with filtering and pagination
+func (uc *UseCase) GetTasks(ctx context.Context, userID, boardID bson.ObjectID, filterReq *dto.TaskFilterRequest, params *utils.PaginationParams, lang string) (*utils.Page[*dto.TaskResponse], error) {
+	// Check access
+	isMember, err := uc.boardMemberRepo.IsMember(ctx, boardID, userID)
+	if err != nil {
+		return nil, errors.NewInternalServerError(uc.localizer.T(lang, "errors.internal_error"), err)
+	}
+	if !isMember {
+		return nil, errors.NewForbiddenError(uc.localizer.T(lang, "errors.board_access_denied"))
+	}
+
+	// Build filter
+	filter := &repositories.TaskFilter{
+		BoardID: &boardID,
+		Search:  filterReq.Search,
+	}
+
+	if filterReq.AssignedToID != "" {
+		assigneeID, err := bson.ObjectIDFromHex(filterReq.AssignedToID)
+		if err == nil {
+			filter.AssignedTo = &assigneeID
+		}
+	}
+
+	if filterReq.Status != "" {
+		filter.Status = &filterReq.Status
+	}
+
+	if filterReq.Priority != "" {
+		filter.Priority = &filterReq.Priority
+	}
+
+	if filterReq.CategoryID != "" {
+		categoryID, err := bson.ObjectIDFromHex(filterReq.CategoryID)
+		if err == nil {
+			filter.CategoryID = &categoryID
+		}
+	}
+
+	if filterReq.DueBefore != "" {
+		if date, err := time.Parse(time.RFC3339, filterReq.DueBefore); err == nil {
+			filter.DueBefore = &date
+		}
+	}
+
+	if filterReq.DueAfter != "" {
+		if date, err := time.Parse(time.RFC3339, filterReq.DueAfter); err == nil {
+			filter.DueAfter = &date
+		}
+	}
+
+	tasks, total, err := uc.taskRepo.GetByBoardID(ctx, boardID, filter, params.Page, params.Limit)
+	if err != nil {
+		return nil, errors.NewInternalServerError(uc.localizer.T(lang, "errors.internal_error"), err)
+	}
+
+	responses := make([]*dto.TaskResponse, len(tasks))
+	for i, task := range tasks {
+		responses[i] = uc.mapTaskToResponse(ctx, task)
+	}
+
+	return utils.NewPage(responses, params, total), nil
+}
+
+// GetTask gets a task by ID
+func (uc *UseCase) GetTask(ctx context.Context, userID, taskID bson.ObjectID, lang string) (*dto.TaskResponse, error) {
+	task, err := uc.taskRepo.GetByID(ctx, taskID)
+	if err != nil {
+		return nil, errors.NewNotFoundError(uc.localizer.T(lang, "errors.task_not_found"))
+	}
+
+	// Check access to board
+	isMember, err := uc.boardMemberRepo.IsMember(ctx, task.BoardID, userID)
+	if err != nil || !isMember {
+		return nil, errors.NewForbiddenError(uc.localizer.T(lang, "errors.board_access_denied"))
+	}
+
+	return uc.mapTaskToResponse(ctx, task), nil
+}
+
+// UpdateTask updates a task
+func (uc *UseCase) UpdateTask(ctx context.Context, userID, taskID bson.ObjectID, req *dto.UpdateTaskRequest, lang string) (*dto.TaskResponse, error) {
+	task, err := uc.taskRepo.GetByID(ctx, taskID)
+	if err != nil {
+		return nil, errors.NewNotFoundError(uc.localizer.T(lang, "errors.task_not_found"))
+	}
+
+	// Check permissions
+	role, err := uc.boardMemberRepo.GetUserRole(ctx, task.BoardID, userID)
+	if err != nil || (role != entities.BoardRoleAdmin && role != entities.BoardRoleEditor) {
+		return nil, errors.NewForbiddenError(uc.localizer.T(lang, "errors.insufficient_permissions"))
+	}
+
+	// Update fields
+	if req.Title != "" {
+		task.Title = req.Title
+	}
+	if req.Description != "" {
+		task.Description = req.Description
+	}
+	if req.Priority != "" {
+		task.Priority = entities.Priority(req.Priority)
+	}
+
+	// Update due date
+	if req.DueDate != "" {
+		dueDate, err := time.Parse(time.RFC3339, req.DueDate)
+		if err != nil {
+			return nil, errors.NewBadRequestError(uc.localizer.T(lang, "errors.invalid_due_date"))
+		}
+		task.DueDate = &dueDate
+	}
+
+	// Update assignee
+	if req.AssignedToID != "" {
+		if req.AssignedToID == "null" {
+			task.AssignedTo = nil
+		} else {
+			assigneeID, err := bson.ObjectIDFromHex(req.AssignedToID)
+			if err != nil {
+				return nil, errors.NewBadRequestError(uc.localizer.T(lang, "errors.invalid_assignee_id"))
+			}
+
+			isMember, err := uc.boardMemberRepo.IsMember(ctx, task.BoardID, assigneeID)
+			if err != nil || !isMember {
+				return nil, errors.NewBadRequestError(uc.localizer.T(lang, "errors.assignee_not_board_member"))
+			}
+			task.AssignedTo = &assigneeID
+		}
+	}
+
+	// Update category
+	if req.CategoryID != "" {
+		if req.CategoryID == "null" {
+			task.CategoryID = nil
+		} else {
+			categoryID, err := bson.ObjectIDFromHex(req.CategoryID)
+			if err != nil {
+				return nil, errors.NewBadRequestError(uc.localizer.T(lang, "errors.invalid_category_id"))
+			}
+
+			category, err := uc.categoryRepo.GetByID(ctx, categoryID)
+			if err != nil || category.BoardID != task.BoardID {
+				return nil, errors.NewBadRequestError(uc.localizer.T(lang, "errors.category_not_found"))
+			}
+			task.CategoryID = &categoryID
+		}
+	}
+
+	task.LastUpdatedBy = &userID
+
+	if err := uc.taskRepo.Update(ctx, task); err != nil {
+		return nil, errors.NewInternalServerError(uc.localizer.T(lang, "errors.internal_error"), err)
+	}
+
+	return uc.mapTaskToResponse(ctx, task), nil
+}
+
+// UpdateTaskStatus updates task status
+func (uc *UseCase) UpdateTaskStatus(ctx context.Context, userID, taskID bson.ObjectID, req *dto.UpdateTaskStatusRequest, lang string) (*dto.TaskResponse, error) {
+	task, err := uc.taskRepo.GetByID(ctx, taskID)
+	if err != nil {
+		return nil, errors.NewNotFoundError(uc.localizer.T(lang, "errors.task_not_found"))
+	}
+
+	// Check permissions
+	role, err := uc.boardMemberRepo.GetUserRole(ctx, task.BoardID, userID)
+	if err != nil || (role != entities.BoardRoleAdmin && role != entities.BoardRoleEditor) {
+		return nil, errors.NewForbiddenError(uc.localizer.T(lang, "errors.insufficient_permissions"))
+	}
+
+	status := entities.TaskStatus(req.Status)
+	if err := uc.taskRepo.UpdateStatus(ctx, taskID, status, userID); err != nil {
+		return nil, errors.NewInternalServerError(uc.localizer.T(lang, "errors.internal_error"), err)
+	}
+
+	// Get updated task
+	updatedTask, err := uc.taskRepo.GetByID(ctx, taskID)
+	if err != nil {
+		return nil, errors.NewInternalServerError(uc.localizer.T(lang, "errors.internal_error"), err)
+	}
+
+	return uc.mapTaskToResponse(ctx, updatedTask), nil
+}
+
+// AssignTask assigns a task to a user
+func (uc *UseCase) AssignTask(ctx context.Context, userID, taskID bson.ObjectID, req *dto.AssignTaskRequest, lang string) (*dto.TaskResponse, error) {
+	task, err := uc.taskRepo.GetByID(ctx, taskID)
+	if err != nil {
+		return nil, errors.NewNotFoundError(uc.localizer.T(lang, "errors.task_not_found"))
+	}
+
+	// Check permissions
+	role, err := uc.boardMemberRepo.GetUserRole(ctx, task.BoardID, userID)
+	if err != nil || (role != entities.BoardRoleAdmin && role != entities.BoardRoleEditor) {
+		return nil, errors.NewForbiddenError(uc.localizer.T(lang, "errors.insufficient_permissions"))
+	}
+
+	assigneeID, err := bson.ObjectIDFromHex(req.AssignedToID)
+	if err != nil {
+		return nil, errors.NewBadRequestError(uc.localizer.T(lang, "errors.invalid_assignee_id"))
+	}
+
+	// Verify assignee is board member
+	isMember, err := uc.boardMemberRepo.IsMember(ctx, task.BoardID, assigneeID)
+	if err != nil || !isMember {
+		return nil, errors.NewBadRequestError(uc.localizer.T(lang, "errors.assignee_not_board_member"))
+	}
+
+	if err := uc.taskRepo.AssignTask(ctx, taskID, assigneeID, userID); err != nil {
+		return nil, errors.NewInternalServerError(uc.localizer.T(lang, "errors.internal_error"), err)
+	}
+
+	// Get updated task
+	updatedTask, err := uc.taskRepo.GetByID(ctx, taskID)
+	if err != nil {
+		return nil, errors.NewInternalServerError(uc.localizer.T(lang, "errors.internal_error"), err)
+	}
+
+	return uc.mapTaskToResponse(ctx, updatedTask), nil
+}
+
+// DeleteTask deletes a task
+func (uc *UseCase) DeleteTask(ctx context.Context, userID, taskID bson.ObjectID, lang string) error {
+	task, err := uc.taskRepo.GetByID(ctx, taskID)
+	if err != nil {
+		return errors.NewNotFoundError(uc.localizer.T(lang, "errors.task_not_found"))
+	}
+
+	// Check permissions
+	role, err := uc.boardMemberRepo.GetUserRole(ctx, task.BoardID, userID)
+	if err != nil || (role != entities.BoardRoleAdmin && role != entities.BoardRoleEditor) {
+		return errors.NewForbiddenError(uc.localizer.T(lang, "errors.insufficient_permissions"))
+	}
+
+	if err := uc.taskRepo.Delete(ctx, taskID); err != nil {
+		return errors.NewInternalServerError(uc.localizer.T(lang, "errors.internal_error"), err)
+	}
+
+	return nil
+}
+
+// Helper method to map task to response
+func (uc *UseCase) mapTaskToResponse(ctx context.Context, task *entities.Task) *dto.TaskResponse {
+	response := &dto.TaskResponse{
+		ID:          task.GetID(),
+		Title:       task.Title,
+		Description: task.Description,
+		Status:      string(task.Status),
+		Priority:    string(task.Priority),
+		IsOverdue:   task.IsOverdue(),
+		CreatedAt:   task.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt:   task.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	}
+
+	if task.DueDate != nil {
+		response.DueDate = task.DueDate.Format("2006-01-02T15:04:05Z07:00")
+	}
+
+	// Get assigned user
+	if task.AssignedTo != nil {
+		if user, err := uc.userRepo.GetByID(ctx, *task.AssignedTo); err == nil {
+			response.AssignedTo = dto.UserToResponse(user)
+		}
+	}
+
+	// Get category
+	if task.CategoryID != nil {
+		if category, err := uc.categoryRepo.GetByID(ctx, *task.CategoryID); err == nil {
+			response.Category = dto.CategoryToResponse(category)
+		}
+	}
+
+	// Get last updated by user
+	if task.LastUpdatedBy != nil {
+		if user, err := uc.userRepo.GetByID(ctx, *task.LastUpdatedBy); err == nil {
+			response.LastUpdatedBy = dto.UserToResponse(user)
+		}
+	}
+
+	return response
+}

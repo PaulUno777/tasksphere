@@ -49,7 +49,7 @@ func SetupAuthRoutes(
 
 	// Protected routes
 	userRoutes := router.Group("/users")
-	userRoutes.Use(middleware.AuthMiddleware(authService, i18nService))
+	userRoutes.Use(middleware.AuthMiddleware(authService))
 	userRoutes.Get("/me", userHandler.GetProfile)
 	userRoutes.Put("/me", userHandler.UpdateProfile)
 	userRoutes.Put("/me/password", userHandler.UpdatePassword)

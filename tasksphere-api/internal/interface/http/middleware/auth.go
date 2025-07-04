@@ -10,7 +10,9 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-func AuthMiddleware(authService services.AuthService, localizer services.I18nService) fiber.Handler {
+func AuthMiddleware(authService services.AuthService) fiber.Handler {
+	localizer := i18n.Get()
+	
 	return func(c *fiber.Ctx) error {
 		lang := c.Get("Accept-Language", "en")
 

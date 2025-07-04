@@ -96,7 +96,7 @@ func (uc *UseCase) Register(ctx context.Context, req *dto.RegisterRequest, lang 
 	return &dto.AuthResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
-		User:         *dto.UserToProfile(user),
+		User:         *dto.UserToResponse(user),
 	}, nil
 }
 
@@ -145,7 +145,7 @@ func (uc *UseCase) Login(ctx context.Context, req *dto.LoginRequest, lang string
 	return &dto.AuthResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
-		User:         *dto.UserToProfile(user),
+		User:         *dto.UserToResponse(user),
 	}, nil
 }
 
@@ -198,7 +198,7 @@ func (uc *UseCase) RefreshToken(ctx context.Context, req *dto.RefreshTokenReques
 	return &dto.AuthResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
-		User:         *dto.UserToProfile(user),
+		User:         *dto.UserToResponse(user),
 	}, nil
 }
 
@@ -295,7 +295,7 @@ func (uc *UseCase) GoogleAuth(ctx context.Context, req *dto.GoogleAuthRequest, l
 	return &dto.AuthResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
-		User:         *dto.UserToProfile(user),
+		User:         *dto.UserToResponse(user),
 	}, nil
 }
 

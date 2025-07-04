@@ -64,4 +64,3 @@ func RateLimit(cfg config.RateLimitConfig, cacheProvider *cache.Connection, logg
 		return c.Next()
 	}
 }
-

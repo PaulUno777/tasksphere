@@ -7,7 +7,7 @@ import (
 )
 
 type Task struct {
-	Base `bson:",inline"`
+	*Base `bson:",inline"`
 
 	Title       string     `bson:"title"`
 	Description string     `bson:"description"`

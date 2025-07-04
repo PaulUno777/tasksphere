@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/PaulUno777/tasksphere-api/internal/config"
 	"github.com/sirupsen/logrus"
@@ -16,47 +17,61 @@ type Logger struct {
 	*logrus.Logger
 }
 
-// NewLogger creates a new logger instance with file rotation
-func NewLogger(cfg *config.Config) *Logger {
-	logger := logrus.New()
+var (
+	instance *Logger
+	once     sync.Once
+)
 
-	// Set log level
-	level, err := logrus.ParseLevel(cfg.Logging.Level)
-	if err != nil {
-		level = logrus.InfoLevel
+// New creates a new logger instance with file rotation
+func New() *Logger {
+	once.Do(func() {
+		cfg := config.Get()
+		logger := logrus.New()
+		// Set log level
+		level, err := logrus.ParseLevel(cfg.Logging.Level)
+		if err != nil {
+			level = logrus.InfoLevel
+		}
+		logger.SetLevel(level)
+
+		if cfg.Logging.Format == "json" {
+			logger.SetFormatter(&logrus.JSONFormatter{
+				TimestampFormat: "2006-01-02 15:04:05",
+				FieldMap: logrus.FieldMap{
+					logrus.FieldKeyTime:  "timestamp",
+					logrus.FieldKeyLevel: "level",
+					logrus.FieldKeyMsg:   "message",
+				},
+			})
+		} else {
+			logger.SetFormatter(&logrus.TextFormatter{
+				FullTimestamp:   true,
+				TimestampFormat: "2006-01-02 15:04:05",
+				ForceColors:     true,
+			})
+		}
+		// Setup file rotation and output
+		if cfg.IsDevelopment() {
+			// In development, log to both file and stdout
+			fileWriter := setupFileRotation(cfg)
+			multiWriter := io.MultiWriter(os.Stdout, fileWriter)
+			logger.SetOutput(multiWriter)
+		} else {
+			// In production, log only to file
+			fileWriter := setupFileRotation(cfg)
+			logger.SetOutput(fileWriter)
+		}
+
+		instance = &Logger{Logger: logger}
+	})
+	return instance
+}
+
+func Get() *Logger {
+	if instance == nil {
+		New()
 	}
-	logger.SetLevel(level)
-
-	if cfg.Logging.Format == "json" {
-		logger.SetFormatter(&logrus.JSONFormatter{
-			TimestampFormat: "2006-01-02 15:04:05",
-			FieldMap: logrus.FieldMap{
-				logrus.FieldKeyTime:  "timestamp",
-				logrus.FieldKeyLevel: "level",
-				logrus.FieldKeyMsg:   "message",
-			},
-		})
-	} else {
-		logger.SetFormatter(&logrus.TextFormatter{
-			FullTimestamp:   true,
-			TimestampFormat: "2006-01-02 15:04:05",
-			ForceColors:     true,
-		})
-	}
-
-	// Setup file rotation and output
-	if cfg.IsDevelopment() {
-		// In development, log to both file and stdout
-		fileWriter := setupFileRotation(cfg)
-		multiWriter := io.MultiWriter(os.Stdout, fileWriter)
-		logger.SetOutput(multiWriter)
-	} else {
-		// In production, log only to file
-		fileWriter := setupFileRotation(cfg)
-		logger.SetOutput(fileWriter)
-	}
-
-	return &Logger{Logger: logger}
+	return instance
 }
 
 // setupFileRotation configures file rotation using lumberjack

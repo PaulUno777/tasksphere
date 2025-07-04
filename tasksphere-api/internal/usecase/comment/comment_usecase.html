@@ -1,0 +1,121 @@
+package comment
+
+import (
+	"context"
+
+	"github.com/PaulUno777/tasksphere-api/internal/domain/entities"
+	"github.com/PaulUno777/tasksphere-api/internal/domain/repositories"
+	"github.com/PaulUno777/tasksphere-api/internal/domain/services"
+	"github.com/PaulUno777/tasksphere-api/internal/infrastructure/i18n"
+	"github.com/PaulUno777/tasksphere-api/internal/interface/http/dto"
+	"github.com/PaulUno777/tasksphere-api/internal/pkg/errors"
+	"github.com/PaulUno777/tasksphere-api/internal/pkg/utils"
+	"go.mongodb.org/mongo-driver/v2/bson"
+)
+
+type UseCase struct {
+	commentRepo     repositories.CommentRepository
+	taskRepo        repositories.TaskRepository
+	boardMemberRepo repositories.BoardMemberRepository
+	userRepo        repositories.UserRepository
+	localizer       services.I18nService
+}
+
+// NewUseCase creates a new comment use case
+func NewUseCase(
+	commentRepo repositories.CommentRepository,
+	taskRepo repositories.TaskRepository,
+	boardMemberRepo repositories.BoardMemberRepository,
+	userRepo repositories.UserRepository,
+) *UseCase {
+	return &UseCase{
+		commentRepo:     commentRepo,
+		taskRepo:        taskRepo,
+		boardMemberRepo: boardMemberRepo,
+		userRepo:        userRepo,
+		localizer:       i18n.Get(),
+	}
+}
+
+func (uc *UseCase) CreateComment(ctx context.Context, userID, taskID bson.ObjectID, req *dto.CreateCommentRequest, lang string) (*dto.CommentResponse, error) {
+	// Get task to verify board access
+	task, err := uc.taskRepo.GetByID(ctx, taskID)
+	if err != nil {
+		return nil, errors.NewNotFoundError(uc.localizer.T(lang, "errors.task_not_found"))
+	}
+
+	// Check if user has access to board (any member can comment)
+	isMember, err := uc.boardMemberRepo.IsMember(ctx, task.BoardID, userID)
+	if err != nil {
+		return nil, errors.NewInternalServerError(uc.localizer.T(lang, "errors.internal_error"), err)
+	}
+	if !isMember {
+		return nil, errors.NewForbiddenError(uc.localizer.T(lang, "errors.board_access_denied"))
+	}
+
+	comment := &entities.Comment{
+		Base:     entities.NewBase(),
+		Content:  req.Content,
+		AuthorID: userID,
+		TaskID:   taskID,
+	}
+
+	createdComment, err := uc.commentRepo.Create(ctx, comment)
+	if err != nil {
+		return nil, errors.NewInternalServerError(uc.localizer.T(lang, "errors.internal_error"), err)
+	}
+
+	return dto.CommentToResponse(ctx, createdComment), nil
+}
+
+// GetComments gets comments for a task with pagination
+func (uc *UseCase) GetComments(ctx context.Context, userID, taskID bson.ObjectID, params *utils.PaginationParams, lang string) (*utils.Page[*dto.CommentResponse], error) {
+	// Get task to verify board access
+	task, err := uc.taskRepo.GetByID(ctx, taskID)
+	if err != nil {
+		return nil, errors.NewNotFoundError(uc.localizer.T(lang, "errors.task_not_found"))
+	}
+
+	// Check access
+	isMember, err := uc.boardMemberRepo.IsMember(ctx, task.BoardID, userID)
+	if err != nil {
+		return nil, errors.NewInternalServerError(uc.localizer.T(lang, "errors.internal_error"), err)
+	}
+	if !isMember {
+		return nil, errors.NewForbiddenError(uc.localizer.T(lang, "errors.board_access_denied"))
+	}
+
+	comments, total, err := uc.commentRepo.GetByTaskID(ctx, taskID, params.Page, params.Limit)
+	if err != nil {
+		return nil, errors.NewInternalServerError(uc.localizer.T(lang, "errors.internal_error"), err)
+	}
+
+	responses := make([]*dto.CommentResponse, len(comments))
+	for i, comment := range comments {
+		responses[i] = dto.CommentToResponse(ctx, comment)
+	}
+
+	return utils.NewPage(responses, params, total), nil
+}
+
+// UpdateComment updates a comment
+func (uc *UseCase) UpdateComment(ctx context.Context, userID, commentID bson.ObjectID, req *dto.UpdateCommentRequest, lang string) (*dto.CommentResponse, error) {
+	comment, err := uc.commentRepo.GetByID(ctx, commentID)
+	if err != nil {
+		return nil, errors.NewNotFoundError(uc.localizer.T(lang, "errors.comment_not_found"))
+	}
+
+	// Only comment author can update
+	if comment.AuthorID != userID {
+		return nil, errors.NewForbiddenError(uc.localizer.T(lang, "errors.insufficient_permissions"))
+	}
+
+	comment.Content = req.Content
+	comment.UpdateTimestamp()
+
+	if err := uc.commentRepo.Update(ctx, comment); err != nil {
+		return nil, errors.NewInternalServerError(uc.localizer.T(lang, "errors.internal_error"), err)
+	}
+
+	return dto.CommentToResponse(ctx, comment), nil
+}

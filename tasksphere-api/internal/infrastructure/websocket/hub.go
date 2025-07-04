@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/PaulUno777/tasksphere-api/internal/domain/entities"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
@@ -385,76 +384,76 @@ func (h *Hub) forceDisconnectClient(client *Client) {
 	close(client.send)
 }
 
-// Public API Methods for Application Layer
+// // Public API Methods for Application Layer
 
-// SendNotificationToUser sends a notification to a specific user (all their devices)
-// This ensures delivery guarantee - if user is online, they get the notification immediately
-// If offline, notification is stored in database and delivered when they reconnect
-func (h *Hub) SendNotificationToUser(notification *entities.Notification) error {
-	// Create notification payload
-	payload := NotificationPayload{
-		ID:        notification.ID.Hex(),
-		Type:      notification.Type,
-		Content:   notification.Content,
-		Priority:  notification.Priority,
-		IsRead:    notification.IsRead,
-		CreatedAt: notification.CreatedAt,
-	}
+// // SendNotificationToUser sends a notification to a specific user (all their devices)
+// // This ensures delivery guarantee - if user is online, they get the notification immediately
+// // If offline, notification is stored in database and delivered when they reconnect
+// func (h *Hub) SendNotificationToUser(notification *entities.Notification) error {
+// 	// Create notification payload
+// 	payload := NotificationPayload{
+// 		ID:        notification.ID.Hex(),
+// 		Type:      notification.Type,
+// 		Content:   notification.Content,
+// 		Priority:  notification.Priority,
+// 		IsRead:    notification.IsRead,
+// 		CreatedAt: notification.CreatedAt,
+// 	}
 
-	if notification.BoardID != nil {
-		boardIDStr := notification.BoardID.Hex()
-		payload.BoardID = &boardIDStr
-	}
+// 	if notification.BoardID != nil {
+// 		boardIDStr := notification.BoardID.Hex()
+// 		payload.BoardID = &boardIDStr
+// 	}
 
-	if notification.TaskID != nil {
-		taskIDStr := notification.TaskID.Hex()
-		payload.TaskID = &taskIDStr
-	}
+// 	if notification.TaskID != nil {
+// 		taskIDStr := notification.TaskID.Hex()
+// 		payload.TaskID = &taskIDStr
+// 	}
 
-	// Send to user via WebSocket
-	message := UserBroadcastMessage{
-		UserIDs: []bson.ObjectID{notification.RecipientID},
-		Type:    MessageTypeNotification,
-		Data:    payload,
-	}
+// 	// Send to user via WebSocket
+// 	message := UserBroadcastMessage{
+// 		UserIDs: []bson.ObjectID{notification.RecipientID},
+// 		Type:    MessageTypeNotification,
+// 		Data:    payload,
+// 	}
 
-	select {
-	case h.userBroadcast <- message:
-		// Mark as delivered if user is connected
-		if h.IsUserConnected(notification.RecipientID) {
-			notification.MarkAsDelivered()
-		}
-		return nil
-	default:
-		return ErrBroadcastFailed
-	}
-}
+// 	select {
+// 	case h.userBroadcast <- message:
+// 		// Mark as delivered if user is connected
+// 		if h.IsUserConnected(notification.RecipientID) {
+// 			notification.MarkAsDelivered()
+// 		}
+// 		return nil
+// 	default:
+// 		return ErrBroadcastFailed
+// 	}
+// }
 
-// SendBoardUpdate sends an update to all members of a board
-// Only sends to clients that are subscribed to the board for efficiency
-func (h *Hub) SendBoardUpdate(boardID bson.ObjectID, updateType string, updatedBy bson.ObjectID, data interface{}) error {
-	payload := BoardUpdatePayload{
-		BoardID:     boardID.Hex(),
-		UpdateType:  updateType,
-		UpdatedBy:   updatedBy.Hex(),
-		UpdatedData: data,
-	}
+// // SendBoardUpdate sends an update to all members of a board
+// // Only sends to clients that are subscribed to the board for efficiency
+// func (h *Hub) SendBoardUpdate(boardID bson.ObjectID, updateType string, updatedBy bson.ObjectID, data interface{}) error {
+// 	payload := BoardUpdatePayload{
+// 		BoardID:     boardID.Hex(),
+// 		UpdateType:  updateType,
+// 		UpdatedBy:   updatedBy.Hex(),
+// 		UpdatedData: data,
+// 	}
 
-	message := BoardBroadcastMessage{
-		BoardID:             boardID,
-		Type:                MessageTypeBoardUpdate,
-		Data:                payload,
-		ExcludeUser:         &updatedBy, // Don't send to the user who made the change
-		RequireSubscription: true,       // Only send to subscribed clients
-	}
+// 	message := BoardBroadcastMessage{
+// 		BoardID:             boardID,
+// 		Type:                MessageTypeBoardUpdate,
+// 		Data:                payload,
+// 		ExcludeUser:         &updatedBy, // Don't send to the user who made the change
+// 		RequireSubscription: true,       // Only send to subscribed clients
+// 	}
 
-	select {
-	case h.boardBroadcast <- message:
-		return nil
-	default:
-		return ErrBroadcastFailed
-	}
-}
+// 	select {
+// 	case h.boardBroadcast <- message:
+// 		return nil
+// 	default:
+// 		return ErrBroadcastFailed
+// 	}
+// }
 
 // SendTaskUpdate sends a task update to relevant board members
 func (h *Hub) SendTaskUpdate(taskID, boardID bson.ObjectID, updateType string, updatedBy bson.ObjectID, data interface{}) error {

@@ -7,17 +7,22 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-type BoardRepository interface {
-	Create(ctx context.Context, board *entities.Board) (*entities.Board, error)
-	GetByID(ctx context.Context, id bson.ObjectID) (*entities.Board, error)
-	GetByOwnerID(ctx context.Context, ownerID bson.ObjectID, limit, skip int) ([]*entities.Board, int64, error)
-	Update(ctx context.Context, board *entities.Board) error
-	Delete(ctx context.Context, id bson.ObjectID) error
+// BoardFilter represents board filtering options
+type BoardFilter struct {
+	Status entities.BoardStatus
+	Search string
+	Page   int
+	Limit  int
+}
 
-	// Board member operations
-	AddMember(ctx context.Context, member *entities.BoardMember) error
-	RemoveMember(ctx context.Context, boardID, userID bson.ObjectID) error
-	GetMembers(ctx context.Context, boardID bson.ObjectID) ([]*entities.BoardMember, error)
-	UpdateMemberRole(ctx context.Context, boardID, userID bson.ObjectID, role entities.BoardRole) error
-	GetUserBoards(ctx context.Context, userID bson.ObjectID, limit, skip int) ([]*entities.Board, int64, error)
+type BoardRepository interface {
+	Create(ctx context.Context, board *entities.Board) error
+	GetByID(ctx context.Context, id bson.ObjectID) (*entities.Board, error)
+	GetByOwner(ctx context.Context, ownerID bson.ObjectID, status entities.BoardStatus) ([]*entities.Board, error)
+	GetByMember(ctx context.Context, userID bson.ObjectID, status entities.BoardStatus) ([]*entities.Board, error)
+	Update(ctx context.Context, board *entities.Board) error
+	UpdateSettings(ctx context.Context, boardID bson.ObjectID, settings entities.BoardSettings) error
+	Delete(ctx context.Context, id bson.ObjectID) error
+	GetStats(ctx context.Context, boardID bson.ObjectID) (*entities.BoardStats, error)
+	List(ctx context.Context, userID bson.ObjectID, filter BoardFilter) ([]*entities.Board, int64, error)
 }

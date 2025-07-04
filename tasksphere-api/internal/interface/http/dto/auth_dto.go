@@ -33,15 +33,15 @@ type UpdatePasswordRequest struct {
 
 // AuthResponse represents authentication response
 type AuthResponse struct {
-	AccessToken  string      `json:"accessToken"`
-	RefreshToken string      `json:"refreshToken"`
-	User         UserProfile `json:"user"`
+	AccessToken  string       `json:"accessToken"`
+	RefreshToken string       `json:"refreshToken"`
+	User         UserResponse `json:"user"`
 }
 
 // GoogleAuthRequest represents Google OAuth request
 type GoogleAuthRequest struct {
-	Code  string `json:"code" validate:"required"`
-	State string `json:"state" validate:"required"`
+	Code     string `json:"code" validate:"required"`
+	State    string `json:"state" validate:"required"`
 	Language string `json:"language" validate:"omitempty,oneof=en fr"`
 }
 
@@ -50,12 +50,13 @@ type GoogleAuthURLResponse struct {
 	State   string `json:"state"`
 }
 
-func UserToProfile(user *entities.User) *UserProfile {
-	return &UserProfile{
-		ID:              user.ID.Hex(),
+func UserToResponse(user *entities.User) *UserResponse {
+	return &UserResponse{
+		ID:              user.GetID(),
 		Email:           user.Email,
 		FirstName:       user.FirstName,
 		LastName:        user.LastName,
+		FullName:        user.GetFullName(),
 		IsEmailVerified: user.IsEmailVerified,
 		Language:        user.Language,
 		AvatarURL:       user.AvatarURL,

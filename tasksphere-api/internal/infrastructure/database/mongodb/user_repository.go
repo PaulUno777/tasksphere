@@ -17,9 +17,24 @@ type userRepository struct {
 }
 
 func NewUserRepository(db *Connection) repositories.UserRepository {
+	collection := db.GetCollection("users")
+
+	// Create indexes
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	userIndexes := []mongo.IndexModel{
+		{
+			Keys:    map[string]int{"email": 1},
+			Options: options.Index().SetUnique(true),
+		},
+		{
+			Keys: bson.D{{Key: "refreshToken", Value: 1}},
+		},
+	}
+	collection.Indexes().CreateMany(ctx, userIndexes)
 
 	return &userRepository{
-		collection: db.GetCollection("users"),
+		collection: collection,
 	}
 }
 

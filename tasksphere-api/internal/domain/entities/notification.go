@@ -7,69 +7,126 @@ import (
 )
 
 type Notification struct {
-	Base `bson:",inline"`
+	*Base `bson:",inline"`
 
-	Type     NotificationType `bson:"type" json:"type" validate:"required"`
-	Content  string           `bson:"content" json:"content" validate:"required,min=1,max=500"`
-	Priority Priority         `bson:"priority" json:"priority" validate:"required,oneof=LOW MEDIUM HIGH"`
+	Type     NotificationType    `bson:"type" json:"type" validate:"required"`
+	Channel  NotificationChannel `bson:"channel"`
+	Priority Priority            `bson:"priority"`
+	Status   NotificationStatus  `bson:"status"`
 
-	IsRead           bool `bson:"isRead" json:"isRead"`
-	IsDelivered      bool `bson:"isDelivered" json:"isDelivered"`
-	DeliveryAttempts int  `bson:"deliveryAttempts" json:"deliveryAttempts"`
+	RecipientID    bson.ObjectID `bson:"recipientId"`
+	RecipientEmail string        `bson:"recipientEmail"`
 
-	RecipientID bson.ObjectID  `bson:"recipientId" json:"recipientId" validate:"required"`
-	BoardID     *bson.ObjectID `bson:"boardId,omitempty" json:"boardId,omitempty"`
-	TaskID      *bson.ObjectID `bson:"taskId,omitempty" json:"taskId,omitempty"`
+	Subject string                 `bson:"subject"`
+	Content string                 `bson:"content"`
+	Data    map[string]interface{} `bson:"data,omitempty"`
 
-	// Cleanup tracking - notifications are deleted after expiry
-	ExpiresAt time.Time `bson:"expiresAt" json:"expiresAt"`
+	ScheduledAt *time.Time `bson:"scheduledAt,omitempty"`
+	SentAt      *time.Time `bson:"sentAt,omitempty"`
+	FailedAt    *time.Time `bson:"failedAt,omitempty"`
+	ExpiresAt   *time.Time `bson:"expiresAt,omitempty"`
+
+	RetryCount int    `bson:"retryCount"`
+	MaxRetries int    `bson:"maxRetries"`
+	LastError  string `bson:"lastError,omitempty"`
+
+	Metadata map[string]interface{} `bson:"metadata,omitempty"`
 }
 
-func (n *Notification) MarkAsRead() {
-	if !n.IsRead {
-		n.IsRead = true
-		n.UpdatedAt = time.Now()
+type NotificationMessage struct {
+	Type     NotificationType    `json:"type"`
+	Channel  NotificationChannel `json:"channel"`
+	Priority Priority            `json:"priority"`
+
+	RecipientID    bson.ObjectID `json:"recipientId"`
+	RecipientEmail string        `json:"recipientEmail"`
+	RecipientName  string        `json:"recipientName"`
+
+	Subject string                 `json:"subject"`
+	Content string                 `json:"content"`
+	Data    map[string]interface{} `json:"data,omitempty"`
+
+	ScheduledAt *time.Time `json:"scheduledAt,omitempty"`
+	ExpiresAt   *time.Time `json:"expiresAt,omitempty"`
+
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
+}
+
+type NotificationResult struct {
+	Success    bool                   `json:"success"`
+	MessageID  string                 `json:"messageId,omitempty"`
+	Error      error                  `json:"error,omitempty"`
+	Metadata   map[string]interface{} `json:"metadata,omitempty"`
+	SentAt     time.Time              `json:"sentAt"`
+	RetryAfter *time.Duration         `json:"retryAfter,omitempty"`
+}
+
+// BatchNotificationResult represents the result of batch notification delivery
+type BatchNotificationResult struct {
+	TotalCount   int                    `json:"totalCount"`
+	SuccessCount int                    `json:"successCount"`
+	FailureCount int                    `json:"failureCount"`
+	Results      []*NotificationResult  `json:"results"`
+	Metadata     map[string]interface{} `json:"metadata,omitempty"`
+}
+
+// Business methods
+func (nm *NotificationMessage) ShouldPersist() bool {
+	return nm.Priority == PriorityHigh || nm.Priority == PriorityCritical
+}
+
+func (nm *NotificationMessage) GetExpirationTime() time.Time {
+	if nm.ExpiresAt != nil {
+		return *nm.ExpiresAt
+	}
+
+	// Default expiration times based on type
+	switch nm.Type {
+	case NotificationTypeEmailVerification, NotificationTypeBoardInvite:
+		return time.Now().Add(30 * time.Minute)
+	default:
+		return time.Now().Add(24 * time.Hour)
 	}
 }
 
-func (n *Notification) MarkAsDelivered() {
-	n.IsDelivered = true
-	n.UpdatedAt = time.Now()
+func (nr *Notification) CanRetry() bool {
+	return nr.Status == StatusFailed &&
+		nr.RetryCount < nr.MaxRetries &&
+		(nr.ExpiresAt == nil || time.Now().Before(*nr.ExpiresAt))
 }
 
-func (n *Notification) IncrementDeliveryAttempts() {
-	n.DeliveryAttempts++
-	n.UpdatedAt = time.Now()
-}
+func (nr *Notification) MarkSent(messageID string) {
+	nr.Status = StatusSent
+	now := time.Now()
+	nr.SentAt = &now
+	nr.UpdateTimestamp()
 
-// ShouldRetryDelivery determines if delivery should be retried based on attempts and priority
-func (n *Notification) ShouldRetryDelivery() bool {
-	maxAttempts := 3
-	if n.IsHighPriority() {
-		maxAttempts = 5
+	if nr.Metadata == nil {
+		nr.Metadata = make(map[string]interface{})
 	}
-	return n.DeliveryAttempts < maxAttempts
+	nr.Metadata["messageId"] = messageID
 }
 
-// GetContextIDs returns the board and task IDs for routing purposes
-func (n *Notification) GetContextIDs() (boardID *bson.ObjectID, taskID *bson.ObjectID) {
-	return n.BoardID, n.TaskID
-}
+func (nr *Notification) MarkFailed(err error, retryAfter *time.Duration) {
+	nr.Status = StatusFailed
+	now := time.Now()
+	nr.FailedAt = &now
+	nr.RetryCount++
+	nr.LastError = err.Error()
+	nr.UpdateTimestamp()
 
-// IsHighPriority checks if the notification requires immediate attention
-func (n *Notification) IsHighPriority() bool {
-	return n.Priority == PriorityHigh
-}
-
-// IsExpired checks if the notification has expired and should be cleaned up
-func (n *Notification) IsExpired() bool {
-	return time.Now().After(n.ExpiresAt)
-}
-
-// SetExpiry sets the expiration time (default 30 days from creation)
-func (n *Notification) SetExpiry(days int) {
-	if days < 1 {
-		days = 7 // Default 7 days
+	if retryAfter != nil {
+		nextRetry := now.Add(*retryAfter)
+		nr.ScheduledAt = &nextRetry
 	}
-	n.ExpiresAt = n.CreatedAt.AddDate(0, 0, days)
+}
+
+func (nr *Notification) MarkRetrying() {
+	nr.Status = StatusRetrying
+	nr.UpdateTimestamp()
+}
+
+func (nr *Notification) MarkExpired() {
+	nr.Status = StatusExpired
+	nr.UpdateTimestamp()
 }

@@ -1,4 +1,4 @@
-package pagination
+package utils
 
 import (
 	"math"
@@ -15,16 +15,16 @@ const (
 )
 
 type PaginationParams struct {
-	Page     int    `json:"page" validate:"min=1"`
-	PageSize int    `json:"limit" validate:"min=1,max=100"`
-	SortBy   string `json:"sort_by"`
-	SortDir  string `json:"sort_dir" validate:"oneof=asc desc"`
+	Page    int    `json:"page" validate:"min=1"`
+	Limit   int    `json:"limit" validate:"min=1,max=100"`
+	SortBy  string `json:"sort_by"`
+	SortDir string `json:"sort_dir" validate:"oneof=asc desc"`
 }
 
 // PageMetadata represents paginated response metadata
 type PageMetadata struct {
 	Page       int   `json:"page"`
-	PageSize   int   `json:"pageSize"`
+	Limit      int   `json:"limit"`
 	TotalItems int64 `json:"totalItems"`
 	TotalPages int   `json:"totalPages"`
 	HasNext    bool  `json:"hasNext"`
@@ -60,30 +60,23 @@ func ParseFromFiber(c *fiber.Ctx) *PaginationParams {
 	}
 
 	return &PaginationParams{
-		Page:     page,
-		PageSize: pageSize,
-		SortBy:   sortBy,
-		SortDir:  sortDir,
+		Page:    page,
+		Limit:   pageSize,
+		SortBy:  sortBy,
+		SortDir: sortDir,
 	}
 }
 
-// Offset returns the offset for MongoDB's skip or SQL OFFSET
-func (p *PaginationParams) Offset() int {
-	return (p.Page - 1) * p.PageSize
+func (p *PaginationParams) GetLimit() int {
+	return p.Limit
 }
 
-// Limit returns the limit for MongoDB's limit or SQL LIMIT
-func (p *PaginationParams) Limit() int {
-	return p.PageSize
-}
-
-// ToMetadata calculates pagination metadata from total count
 func (p *PaginationParams) ToMetadata(totalItems int64) PageMetadata {
-	totalPages := int(math.Ceil(float64(totalItems) / float64(p.PageSize)))
+	totalPages := int(math.Ceil(float64(totalItems) / float64(p.Limit)))
 
 	return PageMetadata{
 		Page:       p.Page,
-		PageSize:   p.PageSize,
+		Limit:      p.Limit,
 		TotalItems: totalItems,
 		TotalPages: totalPages,
 		HasNext:    p.Page < totalPages,

@@ -8,12 +8,13 @@ type UpdateProfileRequest struct {
 }
 
 // UserResponse represents user data in responses
-type UserProfile struct {
+type UserResponse struct {
 	ID              string `json:"id"`
 	Email           string `json:"email"`
 	FirstName       string `json:"firstName"`
 	LastName        string `json:"lastName"`
-	Language        string `json:"language"`
+	FullName        string `json:"fullName"`
+	Language        string `json:"language",omitempty`
 	AvatarURL       string `json:"avatarUrl,omitempty"`
 	IsEmailVerified bool   `json:"isEmailVerified"`
 	CreatedAt       string `json:"createdAt"`

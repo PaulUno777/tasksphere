@@ -29,49 +29,49 @@ func NewUseCase(
 	}
 }
 
-func (uc *UseCase) GetProfile(ctx context.Context, userID bson.ObjectID, lang string) (*dto.UserProfile, error) {
+func (uc *UseCase) GetProfile(ctx context.Context, userID bson.ObjectID, lang string) (*dto.UserResponse, error) {
 	user, err := uc.userRepo.GetByID(ctx, userID)
 	if err != nil {
 		return nil, errors.NewNotFoundError(
 			uc.localizer.T(lang, "errors.user_not_found"))
 	}
 
-	return dto.UserToProfile(user), nil
+	return dto.UserToResponse(user), nil
 }
 
 // UpdateProfile updates user profile
-func (uc *UseCase) UpdateProfile(ctx context.Context, userID bson.ObjectID, req *dto.UpdateProfileRequest, lang string) (*dto.UserProfile, error) {
+func (uc *UseCase) UpdateProfile(ctx context.Context, userID bson.ObjectID, req *dto.UpdateProfileRequest, lang string) (*dto.UserResponse, error) {
 	// Get current user
 	user, err := uc.userRepo.GetByID(ctx, userID)
 	if err != nil {
 		return nil, errors.NewNotFoundError(
 			uc.localizer.T(lang, "errors.user_not_found"))
 	}
-	
+
 	// Prepare updates
 	changed := false
 	if req.FirstName != "" {
 		user.FirstName = req.FirstName
-		changed= true
+		changed = true
 	}
 	if req.LastName != "" {
 		user.LastName = req.LastName
-		changed= true
+		changed = true
 
 	}
 	if req.Language != "" {
 		user.Language = req.Language
-		changed= true
+		changed = true
 
 	}
 	if req.AvatarURL != "" {
 		user.AvatarURL = req.AvatarURL
-		changed= true
+		changed = true
 
 	}
 
 	if !changed {
-		return dto.UserToProfile(user), nil
+		return dto.UserToResponse(user), nil
 	}
 
 	// Update user
@@ -89,7 +89,7 @@ func (uc *UseCase) UpdateProfile(ctx context.Context, userID bson.ObjectID, req 
 
 	fmt.Printf("req %v", updatedUser)
 
-	return dto.UserToProfile(updatedUser), nil
+	return dto.UserToResponse(updatedUser), nil
 }
 
 // UpdatePassword updates user password

@@ -14,10 +14,10 @@ import (
 
 // Connection configuration constants
 const (
-	writeWait       = 10 * time.Second  // Time allowed to write a message to the peer
-	pongWait        = 60 * time.Second  // Time allowed to read the next pong message from the peer
-	pingPeriod      = (pongWait * 9) / 10 // Send pings to peer with this period
-	maxMessageSize  = 512               // Maximum message size allowed from peer
+	writeWait      = 10 * time.Second    // Time allowed to write a message to the peer
+	pongWait       = 60 * time.Second    // Time allowed to read the next pong message from the peer
+	pingPeriod     = (pongWait * 9) / 10 // Send pings to peer with this period
+	maxMessageSize = 512                 // Maximum message size allowed from peer
 )
 
 // Client represents a single WebSocket connection from a user device
@@ -74,7 +74,7 @@ func NewClient(conn *websocket.Conn, userID bson.ObjectID, language string, hub 
 func (c *Client) Start() {
 	go c.writePump()
 	go c.readPump()
-	
+
 	// Send initial connection message
 	c.sendConnectionConfirmation()
 }
@@ -84,7 +84,7 @@ func (c *Client) readPump() {
 	defer func() {
 		c.cleanup()
 	}()
-	
+
 	// Configure connection limits
 	c.conn.SetReadLimit(maxMessageSize)
 	c.conn.SetReadDeadline(time.Now().Add(pongWait))
@@ -93,7 +93,7 @@ func (c *Client) readPump() {
 		c.conn.SetReadDeadline(time.Now().Add(pongWait))
 		return nil
 	})
-	
+
 	for {
 		select {
 		case <-c.ctx.Done():
@@ -106,7 +106,7 @@ func (c *Client) readPump() {
 				}
 				return
 			}
-			
+
 			// Process incoming message
 			if err := c.handleIncomingMessage(messageBytes); err != nil {
 				log.Printf("Error handling message from client %s: %v", c.ID, err)
@@ -123,12 +123,12 @@ func (c *Client) writePump() {
 		ticker.Stop()
 		c.cleanup()
 	}()
-	
+
 	for {
 		select {
 		case <-c.ctx.Done():
 			return
-			
+
 		case message, ok := <-c.send:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
@@ -136,12 +136,12 @@ func (c *Client) writePump() {
 				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
-			
+
 			if err := c.conn.WriteMessage(websocket.TextMessage, message); err != nil {
 				log.Printf("Error writing message to client %s: %v", c.ID, err)
 				return
 			}
-			
+
 		case <-ticker.C:
 			c.lastPing = time.Now()
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
@@ -159,7 +159,7 @@ func (c *Client) handleIncomingMessage(messageBytes []byte) error {
 	if err := json.Unmarshal(messageBytes, &message); err != nil {
 		return err
 	}
-	
+
 	// Route message based on type
 	switch message.Type {
 	case MessageTypePing:
@@ -190,25 +190,25 @@ func (c *Client) handleSubscribeBoard(data interface{}) error {
 	if err := c.parsePayload(data, &payload); err != nil {
 		return err
 	}
-	
+
 	boardID, err := bson.ObjectIDFromHex(payload.BoardID)
 	if err != nil {
 		return c.sendError("INVALID_BOARD_ID", "Invalid board ID format")
 	}
-	
+
 	// Check if user has access to this board (this should call a use case)
 	if !c.hub.userHasBoardAccess(c.UserID, boardID) {
 		return c.sendError("ACCESS_DENIED", "You don't have access to this board")
 	}
-	
+
 	// Subscribe to board
 	c.subscriptionMutex.Lock()
 	c.boardSubscriptions[boardID] = true
 	c.subscriptionMutex.Unlock()
-	
+
 	log.Printf("Client %s subscribed to board %s", c.ID, boardID.Hex())
 	return c.sendMessage(MessageTypeBoardUpdate, map[string]interface{}{
-		"boardId": boardID.Hex(),
+		"boardId":    boardID.Hex(),
 		"subscribed": true,
 	})
 }
@@ -219,20 +219,20 @@ func (c *Client) handleUnsubscribeBoard(data interface{}) error {
 	if err := c.parsePayload(data, &payload); err != nil {
 		return err
 	}
-	
+
 	boardID, err := bson.ObjectIDFromHex(payload.BoardID)
 	if err != nil {
 		return c.sendError("INVALID_BOARD_ID", "Invalid board ID format")
 	}
-	
+
 	// Unsubscribe from board
 	c.subscriptionMutex.Lock()
 	delete(c.boardSubscriptions, boardID)
 	c.subscriptionMutex.Unlock()
-	
+
 	log.Printf("Client %s unsubscribed from board %s", c.ID, boardID.Hex())
 	return c.sendMessage(MessageTypeBoardUpdate, map[string]interface{}{
-		"boardId": boardID.Hex(),
+		"boardId":    boardID.Hex(),
 		"subscribed": false,
 	})
 }
@@ -243,23 +243,23 @@ func (c *Client) handleMarkRead(data interface{}) error {
 	if err := c.parsePayload(data, &payload); err != nil {
 		return err
 	}
-	
+
 	notificationID, err := bson.ObjectIDFromHex(payload.NotificationID)
 	if err != nil {
 		return c.sendError("INVALID_NOTIFICATION_ID", "Invalid notification ID format")
 	}
-	
+
 	// Mark notification as read (this should call a use case)
 	if err := c.hub.markNotificationAsRead(c.UserID, notificationID); err != nil {
 		return c.sendError("MARK_READ_FAILED", "Failed to mark notification as read")
 	}
-	
+
 	// Notify other clients of this user that notification was read
 	c.hub.notifyUserClients(c.UserID, MessageTypeNotificationRead, map[string]interface{}{
 		"notificationId": notificationID.Hex(),
-		"readBy": c.ID,
+		"readBy":         c.ID,
 	})
-	
+
 	return nil
 }
 
@@ -269,13 +269,13 @@ func (c *Client) handleMarkAllRead() error {
 	if err := c.hub.markAllNotificationsAsRead(c.UserID); err != nil {
 		return c.sendError("MARK_ALL_READ_FAILED", "Failed to mark all notifications as read")
 	}
-	
+
 	// Notify other clients of this user
 	c.hub.notifyUserClients(c.UserID, MessageTypeNotificationRead, map[string]interface{}{
 		"allRead": true,
-		"readBy": c.ID,
+		"readBy":  c.ID,
 	})
-	
+
 	return nil
 }
 
@@ -285,22 +285,22 @@ func (c *Client) handleTyping(data interface{}) error {
 	if err := c.parsePayload(data, &payload); err != nil {
 		return err
 	}
-	
+
 	taskID, err := bson.ObjectIDFromHex(payload.TaskID)
 	if err != nil {
 		return c.sendError("INVALID_TASK_ID", "Invalid task ID format")
 	}
-	
+
 	// Get board ID for this task and notify other board members
 	boardID := c.hub.getBoardIDForTask(taskID)
 	if boardID != bson.NilObjectID {
 		c.hub.notifyBoardMembers(boardID, c.UserID, MessageTypeUserTyping, UserTypingPayload{
-			UserID: c.UserID.Hex(),
-			TaskID: taskID.Hex(),
+			UserID:   c.UserID.Hex(),
+			TaskID:   taskID.Hex(),
 			IsTyping: true,
 		})
 	}
-	
+
 	return nil
 }
 
@@ -314,12 +314,12 @@ func (c *Client) sendMessage(msgType WebSocketMessageType, data interface{}) err
 		Timestamp: time.Now(),
 		MessageID: uuid.New().String(),
 	}
-	
+
 	messageBytes, err := json.Marshal(message)
 	if err != nil {
 		return err
 	}
-	
+
 	select {
 	case c.send <- messageBytes:
 		return nil
@@ -339,9 +339,9 @@ func (c *Client) sendError(code, message string) error {
 // sendConnectionConfirmation sends initial connection confirmation
 func (c *Client) sendConnectionConfirmation() {
 	c.sendMessage(MessageTypeConnected, map[string]interface{}{
-		"clientId": c.ID,
-		"userId":   c.UserID.Hex(),
-		"language": c.Language,
+		"clientId":  c.ID,
+		"userId":    c.UserID.Hex(),
+		"language":  c.Language,
 		"timestamp": time.Now(),
 	})
 }
@@ -366,7 +366,7 @@ func (c *Client) isSubscribedToBoard(boardID bson.ObjectID) bool {
 func (c *Client) getSubscribedBoards() []bson.ObjectID {
 	c.subscriptionMutex.RLock()
 	defer c.subscriptionMutex.RUnlock()
-	
+
 	boards := make([]bson.ObjectID, 0, len(c.boardSubscriptions))
 	for boardID := range c.boardSubscriptions {
 		boards = append(boards, boardID)
@@ -378,12 +378,12 @@ func (c *Client) getSubscribedBoards() []bson.ObjectID {
 func (c *Client) cleanup() {
 	c.isActive = false
 	c.cancel()
-	
+
 	// Unregister from hub
 	c.hub.unregister <- c
-	
+
 	// Close connection
 	c.conn.Close()
-	
+
 	log.Printf("Client %s (user %s) disconnected", c.ID, c.UserID.Hex())
 }

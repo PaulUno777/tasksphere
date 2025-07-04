@@ -8,11 +8,9 @@ import (
 )
 
 type CommentRepository interface {
-	Create(ctx context.Context, comment *entities.Comment) error
+	Create(ctx context.Context, comment *entities.Comment) (*entities.Comment, error)
 	GetByID(ctx context.Context, id bson.ObjectID) (*entities.Comment, error)
+	GetByTaskID(ctx context.Context, taskID bson.ObjectID, page, limit int) ([]*entities.Comment, int64, error)
 	Update(ctx context.Context, comment *entities.Comment) error
 	Delete(ctx context.Context, id bson.ObjectID) error
-	GetByTask(ctx context.Context, taskID bson.ObjectID, limit, offset int) ([]*entities.Comment, error)
-	CountByTask(ctx context.Context, taskID bson.ObjectID) (int64, error)
-	DeleteByTask(ctx context.Context, taskID bson.ObjectID) error
 }

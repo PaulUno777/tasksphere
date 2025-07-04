@@ -22,9 +22,9 @@ type Config struct {
 
 // ServerConfig contains HTTP server configuration
 type ServerConfig struct {
-	Port         string        `validate:"required"`
-	Environment  string        `validate:"required,oneof=development staging production"`
-	CORSOrigins  []string      
+	Port         string `validate:"required"`
+	Environment  string `validate:"required,oneof=development staging production"`
+	CORSOrigins  []string
 	ReadTimeout  time.Duration `validate:"required"`
 	WriteTimeout time.Duration `validate:"required"`
 	IdleTimeout  time.Duration `validate:"required"`

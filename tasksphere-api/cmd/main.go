@@ -23,7 +23,7 @@ func main() {
 	cfg := config.Load()
 
 	// Initialize logger
-	log := logger.NewLogger(cfg)
+	log := logger.New()
 	log.Info("🚀 Starting TaskSphere Backend Server...")
 
 	// Load i18n

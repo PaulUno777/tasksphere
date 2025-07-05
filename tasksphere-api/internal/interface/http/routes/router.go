@@ -54,6 +54,7 @@ func Setup(
 	// Setup route groups (to be implemented in future phases)
 	SetupAuthRoutes(api, cfg, mongoDB, redisClient, logger)
 	SetupBoardRoutes(api, cfg, mongoDB, redisClient, logger)
+	SetupCategoryRoutes(api, cfg, mongoDB, redisClient, logger)
 
 	setupUserRoutes(api, cfg, mongoDB, redisClient, logger)
 

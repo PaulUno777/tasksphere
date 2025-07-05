@@ -2,22 +2,23 @@ package dto
 
 // CreateTaskRequest represents task creation request
 type CreateTaskRequest struct {
-	Title        string `json:"title" validate:"required,min=3,max=200"`
-	Description  string `json:"description" validate:"omitempty,max=2000"`
-	Priority     string `json:"priority" validate:"required,oneof=LOW MEDIUM HIGH"`
-	DueDate      string `json:"dueDate" validate:"omitempty,date"`
-	AssignedToID string `json:"assignedToId" validate:"omitempty,objectid"`
-	CategoryID   string `json:"categoryId" validate:"omitempty,objectid"`
+	Title       string  `json:"title" validate:"required,min=1,max=200"`
+	Description string `json:"description" validate:"omitempty,max=2000"`
+	Priority    string  `json:"priority" validate:"omitempty,oneof=LOW MEDIUM HIGH CRITICAL"`
+	CategoryID  *string `json:"categoryId" validate:"omitempty,objectid"`
+	AssignedTo  *string `json:"assignedTo" validate:"omitempty,objectid"`
+	DueDate     *string `json:"dueDate" validate:"omitempty,date"`
+	StartDate   *string `json:"startDate" validate:"omitempty,date"`
 }
 
 // UpdateTaskRequest represents task update request
 type UpdateTaskRequest struct {
-	Title        string `json:"title" validate:"omitempty,min=3,max=200"`
-	Description  string `json:"description" validate:"omitempty,max=2000"`
-	Priority     string `json:"priority" validate:"omitempty,oneof=LOW MEDIUM HIGH"`
-	DueDate      string `json:"dueDate" validate:"omitempty,date"`
-	AssignedToID string `json:"assignedToId" validate:"omitempty,objectid"`
-	CategoryID   string `json:"categoryId" validate:"omitempty,objectid"`
+	Title       *string `json:"title" validate:"omitempty,min=1,max=200"`
+	Description *string `json:"description" validate:"omitempty,max=2000"`
+	Priority    *string `json:"priority" validate:"omitempty,oneof=LOW MEDIUM HIGH CRITICAL"`
+	CategoryID  *string `json:"categoryId" validate:"omitempty"`
+	DueDate     *string `json:"dueDate" validate:"omitempty,datetime=2006-01-02T15:04:05Z07:00"`
+	StartDate   *string `json:"startDate" validate:"omitempty,datetime=2006-01-02T15:04:05Z07:00"`
 }
 
 // UpdateTaskStatusRequest represents task status update request
@@ -27,32 +28,50 @@ type UpdateTaskStatusRequest struct {
 
 // AssignTaskRequest represents task assignment request
 type AssignTaskRequest struct {
-	AssignedToID string `json:"assignedToId" validate:"required,objectid"`
+	AssignedTo string `json:"assignedTo" validate:"required,objectid"`
 }
 
 // TaskResponse represents task data in API responses
 type TaskResponse struct {
-	ID            string            `json:"id"`
-	Title         string            `json:"title"`
-	Description   string            `json:"description"`
-	Status        string            `json:"status"`
-	Priority      string            `json:"priority"`
-	DueDate       string            `json:"dueDate,omitempty"`
-	IsOverdue     bool              `json:"isOverdue"`
-	AssignedTo    *UserResponse     `json:"assignedTo,omitempty"`
-	Category      *CategoryResponse `json:"category,omitempty"`
-	LastUpdatedBy *UserResponse     `json:"lastUpdatedBy,omitempty"`
-	CreatedAt     string            `json:"createdAt"`
-	UpdatedAt     string            `json:"updatedAt"`
+	ID          string  `json:"id"`
+	Title       string  `json:"title"`
+	Description *string `json:"description,omitempty"`
+	Status      string  `json:"status"`
+	Priority    string  `json:"priority"`
+	Position    int     `json:"position"`
+
+	// References with populated data
+	Board        *BoardSummaryResponse `json:"board"`
+	Category     *CategoryResponse     `json:"category,omitempty"`
+	AssignedTo   *UserResponse         `json:"assignedTo,omitempty"`
+	CreatedBy    *UserResponse         `json:"createdBy"`
+	LastEditedBy *UserResponse         `json:"lastEditedBy"`
+
+	// Dates
+	DueDate     *string `json:"dueDate,omitempty"`
+	StartDate   *string `json:"startDate,omitempty"`
+	CompletedAt *string `json:"completedAt,omitempty"`
+	ArchivedAt  *string `json:"archivedAt,omitempty"`
+	CreatedAt   string  `json:"createdAt"`
+	UpdatedAt   string  `json:"updatedAt"`
+
+	// Computed flags
+	IsOverdue bool `json:"isOverdue"`
+	CanEdit   bool `json:"canEdit"`
+
+	// Counters
+	CommentCount int `json:"commentCount"`
 }
 
-// TaskFilter represents task filtering options for API
-type TaskFilterRequest struct {
-	AssignedToID string `query:"assignedToId" validate:"omitempty,objectid"`
-	Status       string `query:"status" validate:"omitempty,oneof=TODO IN_PROGRESS REVIEW COMPLETED ARCHIVED"`
-	Priority     string `query:"priority" validate:"omitempty,oneof=LOW MEDIUM HIGH"`
-	CategoryID   string `query:"categoryId" validate:"omitempty,objectid"`
-	Search       string `query:"search"`
-	DueBefore    string `query:"dueBefore" validate:"omitempty,date"`
-	DueAfter     string `query:"dueAfter" validate:"omitempty,date"`
+type BoardSummaryResponse struct {
+	ID    string  `json:"id"`
+	Title string  `json:"title"`
+	Color *string `json:"color,omitempty"`
+}
+
+type TaskKanbanResponse struct {
+	Todo       []*TaskResponse `json:"todo"`
+	InProgress []*TaskResponse `json:"inProgress"`
+	Review     []*TaskResponse `json:"review"`
+	Completed  []*TaskResponse `json:"completed"`
 }

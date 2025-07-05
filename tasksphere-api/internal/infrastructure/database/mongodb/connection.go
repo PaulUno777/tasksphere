@@ -69,3 +69,7 @@ func (c *Connection) WithTimeout() (context.Context, context.CancelFunc) {
 func (c *Connection) GetCollection(name string) *mongo.Collection {
 	return c.Database.Collection(name)
 }
+
+func (c *Connection) GetRepositoryFactory() *RepositoryFactory {
+	return NewRepositoryFactory(c, c.Timeout)
+}

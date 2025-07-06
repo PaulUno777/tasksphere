@@ -90,6 +90,7 @@
     "category_already_active": "La catégorie est déjà active",
     "category_has_tasks": "Impossible de supprimer une catégorie qui contient des tâches",
     "comment_not_found": "Commentaire non trouvé",
+     "comments_not_allowed": "Les commentaires sont désactivés sur ce tableau.",
     "invalid_comment_id": "ID de commentaire invalide",
     "cannot_edit_comment": "Impossible de modifier ce commentaire",
     "cannot_delete_comment": "Impossible de supprimer ce commentaire",

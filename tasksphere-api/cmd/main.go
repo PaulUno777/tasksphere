@@ -18,7 +18,6 @@ import (
 )
 
 func main() {
-
 	// Load configuration
 	cfg := config.Load()
 

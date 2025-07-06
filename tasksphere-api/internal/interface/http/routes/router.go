@@ -55,20 +55,8 @@ func Setup(
 	SetupAuthRoutes(api, cfg, mongoDB, redisClient, logger)
 	SetupBoardRoutes(api, cfg, mongoDB, redisClient, logger)
 	SetupCategoryRoutes(api, cfg, mongoDB, redisClient, logger)
-
-	setupUserRoutes(api, cfg, mongoDB, redisClient, logger)
-
-	setupTaskRoutes(api, cfg, mongoDB, redisClient, logger)
-	setupNotificationRoutes(api, cfg, mongoDB, redisClient, logger)
-}
-
-func setupUserRoutes(api fiber.Router, cfg *config.Config, db *mongodb.Connection, cache *cache.Connection, logger *logger.Logger) {
-	// TODO: Implement in Phase 2
-}
-
-
-func setupTaskRoutes(api fiber.Router, cfg *config.Config, db *mongodb.Connection, cache *cache.Connection, logger *logger.Logger) {
-	// TODO: Implement in Phase 2
+	SetupTaskRoutes(api, cfg, mongoDB, redisClient, logger)
+	SetupCommentRoutes(api, cfg, mongoDB, redisClient, logger)
 }
 
 func setupNotificationRoutes(api fiber.Router, cfg *config.Config, db *mongodb.Connection, cache *cache.Connection, logger *logger.Logger) {

@@ -90,6 +90,7 @@
     "category_already_active": "Category is already active",
     "category_has_tasks": "Cannot delete category that has tasks",
     "comment_not_found": "Comment not found",
+    "comments_not_allowed": "Comments are disabled on this board.",
     "invalid_comment_id": "Invalid comment ID",
     "cannot_edit_comment": "Cannot edit this comment",
     "cannot_delete_comment": "Cannot delete this comment",

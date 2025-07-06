@@ -3,8 +3,8 @@ package dto
 // CreateTaskRequest represents task creation request
 type CreateTaskRequest struct {
 	Title       string  `json:"title" validate:"required,min=1,max=200"`
-	Description string `json:"description" validate:"omitempty,max=2000"`
-	Priority    string  `json:"priority" validate:"omitempty,oneof=LOW MEDIUM HIGH CRITICAL"`
+	Description string  `json:"description" validate:"omitempty,max=2000"`
+	Priority    string  `json:"priority" validate:"omitempty,oneof=LOW NORMAL HIGH CRITICAL"`
 	CategoryID  *string `json:"categoryId" validate:"omitempty,objectid"`
 	AssignedTo  *string `json:"assignedTo" validate:"omitempty,objectid"`
 	DueDate     *string `json:"dueDate" validate:"omitempty,date"`
@@ -15,7 +15,7 @@ type CreateTaskRequest struct {
 type UpdateTaskRequest struct {
 	Title       *string `json:"title" validate:"omitempty,min=1,max=200"`
 	Description *string `json:"description" validate:"omitempty,max=2000"`
-	Priority    *string `json:"priority" validate:"omitempty,oneof=LOW MEDIUM HIGH CRITICAL"`
+	Priority    *string `json:"priority" validate:"omitempty,oneof=LOW NORMAL HIGH CRITICAL"`
 	CategoryID  *string `json:"categoryId" validate:"omitempty"`
 	DueDate     *string `json:"dueDate" validate:"omitempty,datetime=2006-01-02T15:04:05Z07:00"`
 	StartDate   *string `json:"startDate" validate:"omitempty,datetime=2006-01-02T15:04:05Z07:00"`
@@ -24,6 +24,12 @@ type UpdateTaskRequest struct {
 // UpdateTaskStatusRequest represents task status update request
 type UpdateTaskStatusRequest struct {
 	Status string `json:"status" validate:"required,oneof=TODO IN_PROGRESS REVIEW COMPLETED ARCHIVED"`
+}
+
+// UpdateTaskPositionRequest represents task position update request
+type UpdateTaskPositionRequest struct {
+	Position int    `json:"position" validate:"min=0"`
+	Status   string `json:"status" validate:"required,oneof=TODO IN_PROGRESS REVIEW COMPLETED"`
 }
 
 // AssignTaskRequest represents task assignment request
@@ -43,9 +49,9 @@ type TaskResponse struct {
 	// References with populated data
 	Board        *BoardSummaryResponse `json:"board"`
 	Category     *CategoryResponse     `json:"category,omitempty"`
-	AssignedTo   *UserResponse         `json:"assignedTo,omitempty"`
-	CreatedBy    *UserResponse         `json:"createdBy"`
-	LastEditedBy *UserResponse         `json:"lastEditedBy"`
+	AssignedTo   *UserMinimal          `json:"assignedTo,omitempty"`
+	CreatedBy    *UserMinimal          `json:"createdBy"`
+	LastEditedBy *UserMinimal          `json:"lastEditedBy"`
 
 	// Dates
 	DueDate     *string `json:"dueDate,omitempty"`

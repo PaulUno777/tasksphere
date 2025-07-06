@@ -136,15 +136,15 @@ func (uc *UseCase) GetBoard(ctx context.Context, userID, boardID bson.ObjectID, 
 }
 
 // GetBoards gets user's boards with pagination
-func (uc *UseCase) GetBoards(ctx context.Context, userID bson.ObjectID, status entities.BoardStatus, search string, params *utils.PaginationParams, lang string) (*utils.Page[*dto.BoardResponse], error) {
-	filter := repositories.BoardFilter{
-		Status: status,
-		Search: search,
-		Page:   params.Page,
-		Limit:  params.Limit,
+func (uc *UseCase) GetBoards(ctx context.Context, userID bson.ObjectID, filter BoardQueryFilter, lang string) (*utils.Page[*dto.BoardResponse], error) {
+	repoFilter := repositories.BoardFilter{
+		Status: entities.BoardStatus(filter.Status),
+		Search: filter.Search,
+		Page:   filter.Page,
+		Limit:  filter.Limit,
 	}
 
-	boards, total, err := uc.boardRepo.List(ctx, userID, filter)
+	boards, total, err := uc.boardRepo.List(ctx, userID, repoFilter)
 	if err != nil {
 		return nil, errors.NewInternalServerError(uc.localizer.T(lang, "errors.internal_error"), err)
 	}
@@ -168,11 +168,7 @@ func (uc *UseCase) GetBoards(ctx context.Context, userID bson.ObjectID, status e
 		boardResponses = append(boardResponses, boardResponse)
 	}
 
-	return utils.NewPage(
-		boardResponses,
-		&utils.PaginationParams{Page: params.Page, Limit: params.Limit},
-		total,
-	), nil
+	return utils.NewPage(boardResponses, &filter.BaseFilter, total), nil
 }
 
 // UpdateBoard updates a board

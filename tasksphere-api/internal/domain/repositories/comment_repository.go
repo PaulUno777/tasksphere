@@ -10,7 +10,6 @@ import (
 type CommentFilter struct {
 	Type      entities.CommentType
 	AuthorID  *bson.ObjectID
-	IsDeleted *bool
 	Page      int
 	Limit     int
 	SortOrder string
@@ -33,6 +32,7 @@ type CommentRepository interface {
 	SoftDelete(ctx context.Context, id bson.ObjectID, userID bson.ObjectID) error
 	AddReaction(ctx context.Context, commentID bson.ObjectID, reaction entities.CommentReaction) error
 	RemoveReaction(ctx context.Context, commentID bson.ObjectID, userID bson.ObjectID, emoji string) error
+	GetCommentWithDetails(ctx context.Context, commentID bson.ObjectID) (*CommentWithDetails, error)
 	GetCommentsWithDetails(ctx context.Context, taskID bson.ObjectID, filter CommentFilter) ([]*CommentWithDetails, error)
 	CountByTask(ctx context.Context, taskID bson.ObjectID) (int64, error)
 	GetMentionsForUser(ctx context.Context, userID bson.ObjectID, filter CommentFilter) ([]*entities.Comment, int64, error)

@@ -1,5 +1,7 @@
 package dto
 
+import "github.com/PaulUno777/tasksphere-api/internal/domain/entities"
+
 type UpdateProfileRequest struct {
 	FirstName string `json:"firstName,omitempty" validate:"omitempty,min=2,max=50"`
 	LastName  string `json:"lastName,omitempty" validate:"omitempty,min=2,max=50"`
@@ -28,4 +30,14 @@ type UserResponse struct {
 	IsEmailVerified bool   `json:"isEmailVerified"`
 	CreatedAt       string `json:"createdAt"`
 	UpdatedAt       string `json:"updatedAt"`
+}
+
+func UserToMinimal(user *entities.User) *UserMinimal {
+	return &UserMinimal{
+		ID:        user.GetID(),
+		Email:     user.Email,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		AvatarURL: user.AvatarURL,
+	}
 }

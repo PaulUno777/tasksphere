@@ -1,12 +1,11 @@
 package routes
 
 import (
-	"log/slog"
-
 	"github.com/PaulUno777/tasksphere-api/internal/config"
 	"github.com/PaulUno777/tasksphere-api/internal/infrastructure/cache"
 	"github.com/PaulUno777/tasksphere-api/internal/infrastructure/database/mongodb"
 	"github.com/PaulUno777/tasksphere-api/internal/infrastructure/i18n"
+	"github.com/PaulUno777/tasksphere-api/internal/infrastructure/logger"
 	"github.com/PaulUno777/tasksphere-api/internal/infrastructure/security"
 	"github.com/PaulUno777/tasksphere-api/internal/interface/http/handlers"
 	"github.com/PaulUno777/tasksphere-api/internal/interface/http/middleware"
@@ -19,7 +18,7 @@ func SetupTaskRoutes(
 	cfg *config.Config,
 	mongoDB *mongodb.Connection,
 	redisClient *cache.Connection,
-	logger *slog.Logger,
+	logger *logger.Logger,
 ) {
 	// Initialize services
 	i18nService := i18n.Get()
@@ -56,27 +55,26 @@ func SetupTaskRoutes(
 	boardTaskRoutes := router.Group("/boards/:boardId/tasks")
 	boardTaskRoutes.Use(middleware.AuthMiddleware(authService))
 
-	boardTaskRoutes.Post("/", taskHandler.CreateTask)                    // Create task
-	// boardTaskRoutes.Get("/", taskHandler.GetBoardTasks)                  // List board tasks
-	// boardTaskRoutes.Get("/kanban", taskHandler.GetBoardTasksKanban)      // Get kanban view
+	boardTaskRoutes.Post("/", taskHandler.CreateTask)               // Create task
+	boardTaskRoutes.Get("/", taskHandler.GetBoardTasks)             // List board tasks
+	boardTaskRoutes.Get("/kanban", taskHandler.GetBoardTasksKanban) // Get kanban view
 
-	// // Protected routes (all task routes require authentication)
-	// taskRoutes := router.Group("/tasks")
-	// taskRoutes.Use(middleware.AuthMiddleware(authService))
+	// Protected routes (all task routes require authentication)
+	taskRoutes := router.Group("/tasks")
+	taskRoutes.Use(middleware.AuthMiddleware(authService))
 
-	// taskRoutes.Get("/:id", taskHandler.GetTask)                          // Get task details
-	// taskRoutes.Put("/:id", taskHandler.UpdateTask)                       // Update task
-	// taskRoutes.Delete("/:id", taskHandler.DeleteTask)                    // Delete task
-	// taskRoutes.Put("/:id/status", taskHandler.UpdateTaskStatus)          // Update task status
-	// taskRoutes.Put("/:id/assign", taskHandler.AssignTask)                // Assign/unassign task
-	// taskRoutes.Put("/:id/position", taskHandler.UpdateTaskPosition)      // Update task position
-	// taskRoutes.Put("/:id/archive", taskHandler.ArchiveTask)              // Archive task
-	// taskRoutes.Put("/:id/restore", taskHandler.RestoreTask)              // Restore archived task
+	taskRoutes.Get("/:id", taskHandler.GetTask)                     // Get task details
+	taskRoutes.Put("/:id", taskHandler.UpdateTask)                  // Update task
+	taskRoutes.Delete("/:id", taskHandler.DeleteTask)               // Delete task
+	taskRoutes.Put("/:id/status", taskHandler.UpdateTaskStatus)     // Update task status
+	taskRoutes.Put("/:id/assign", taskHandler.AssignTask)           // Assign/unassign task
+	taskRoutes.Put("/:id/position", taskHandler.UpdateTaskPosition) // Update task position
+	taskRoutes.Put("/:id/archive", taskHandler.ArchiveTask)         // Archive task
+	taskRoutes.Put("/:id/restore", taskHandler.RestoreTask)         // Restore archived task
 
+	// User-specific task routes
+	userTaskRoutes := router.Group("/my/tasks")
+	userTaskRoutes.Use(middleware.AuthMiddleware(authService))
 
-	// // User-specific task routes
-	// userTaskRoutes := router.Group("/my/tasks")
-	// userTaskRoutes.Use(middleware.AuthMiddleware(authService))
-	
-	// userTaskRoutes.Get("/", taskHandler.GetMyTasks)     
+	userTaskRoutes.Get("/", taskHandler.GetMyTasks)
 }

@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"github.com/PaulUno777/tasksphere-api/internal/domain/entities"
 	"github.com/PaulUno777/tasksphere-api/internal/domain/services"
 	"github.com/PaulUno777/tasksphere-api/internal/infrastructure/i18n"
 	"github.com/PaulUno777/tasksphere-api/internal/interface/http/dto"
@@ -51,18 +50,16 @@ func (h *BoardHandler) ListBoards(c *fiber.Ctx) error {
 	lang := c.Get("Accept-Language", "en")
 	userID := middleware.GetUserIDFromContext(c)
 
-	// Parse query parameters
-	status := entities.BoardStatus(c.Query("status", "ACTIVE"))
-	search := c.Query("search", "")
-	// Validate status
-	if status != "" && status != entities.BoardStatusActive &&
-		status != entities.BoardStatusArchived && status != entities.BoardStatusDeleted {
-		return errors.NewBadRequestError(h.localizer.T(lang, "errors.invalid_board_status"))
-	}
 	// Parse pagination
-	pagination := utils.ParseFromFiber(c)
+	filter, err := utils.ParseFilterFromFiber[board.BoardQueryFilter](c)
+	if err != nil {
+		return errors.NewBadRequestError(err.Error())
+	}
+	if filter.Status == "" {
+		filter.Status = "ACTIVE"
+	}
 
-	response, err := h.boardUseCase.GetBoards(c.Context(), userID, status, search, pagination, lang)
+	response, err := h.boardUseCase.GetBoards(c.Context(), userID, *filter, lang)
 	if err != nil {
 		return err
 	}

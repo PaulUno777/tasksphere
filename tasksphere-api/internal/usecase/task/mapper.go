@@ -6,26 +6,24 @@ import (
 	"github.com/PaulUno777/tasksphere-api/internal/domain/entities"
 	"github.com/PaulUno777/tasksphere-api/internal/domain/repositories"
 	"github.com/PaulUno777/tasksphere-api/internal/interface/http/dto"
+	"github.com/PaulUno777/tasksphere-api/internal/pkg/utils"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // TaskQueryFilter represents query parameters for task filtering
 type TaskQueryFilter struct {
 	Status     string // TODO, IN_PROGRESS, REVIEW, COMPLETED, ARCHIVED
-	Priority   string // LOW, MEDIUM, HIGH, CRITICAL
+	Priority   string // LOW, NORMAL, HIGH, CRITICAL
 	AssignedTo string // User ID
 	CategoryID string // Category ID
 	Search     string // Text search in title/description
 	IsOverdue  *bool  // Filter overdue tasks
 	DueBefore  string // Tasks due before this date (ISO format)
 	DueAfter   string // Tasks due after this date (ISO format)
-	Page       int    // Page number for pagination (default: 1)
-	Limit      int    // Items per page (default: 20, max: 100)
-	SortBy     string // Field to sort by (position, title, priority, dueDate, createdAt, updatedAt)
-	SortOrder  string // Sort order (asc, desc)
+	utils.BaseFilter
 }
 
-func (uc *UseCase) convertQueryFilter(filter TaskQueryFilter, boardID bson.ObjectID) (repositories.TaskFilter, error) {
+func (uc *UseCase) convertQueryFilter(filter *TaskQueryFilter, boardID bson.ObjectID) (repositories.TaskFilter, error) {
 	repoFilter := repositories.TaskFilter{
 		Page:      filter.Page,
 		Limit:     filter.Limit,
@@ -143,25 +141,23 @@ func (uc *UseCase) mapTaskToResponse(taskDetail *repositories.TaskWithDetails, u
 	// Add category info
 	if taskDetail.Category != nil {
 		response.Category = &dto.CategoryResponse{
-			ID:       taskDetail.Category.GetID(),
-			Name:     taskDetail.Category.Name,
-			Color:    taskDetail.Category.Color,
-			Position: taskDetail.Category.Position,
-			IsActive: taskDetail.Category.IsActive,
+			ID:    taskDetail.Category.GetID(),
+			Name:  taskDetail.Category.Name,
+			Color: taskDetail.Category.Color,
 		}
 	}
 
 	// Add user info
 	if taskDetail.AssignedUser != nil {
-		response.AssignedTo = dto.UserToResponse(taskDetail.AssignedUser)
+		response.AssignedTo = dto.UserToMinimal(taskDetail.AssignedUser)
 	}
 
 	if taskDetail.Creator != nil {
-		response.CreatedBy = dto.UserToResponse(taskDetail.Creator)
+		response.CreatedBy = dto.UserToMinimal(taskDetail.Creator)
 	}
 
 	if taskDetail.LastEditor != nil {
-		response.LastEditedBy = dto.UserToResponse(taskDetail.LastEditor)
+		response.LastEditedBy = dto.UserToMinimal(taskDetail.LastEditor)
 	}
 
 	return response

@@ -111,11 +111,9 @@ func (r *commentRepository) GetByTask(ctx context.Context, taskID bson.ObjectID,
 	return comments, total, nil
 }
 
-func (r *commentRepository) GetCommentsWithDetails(ctx context.Context, taskID bson.ObjectID, filter repositories.CommentFilter) ([]*repositories.CommentWithDetails, error) {
+func (r *commentRepository) GetCommentWithDetails(ctx context.Context, commentID bson.ObjectID) (*repositories.CommentWithDetails, error) {
 	pipeline := []bson.M{
-		{
-			"$match": r.buildCommentFilter(taskID, filter),
-		},
+		{"$match": bson.M{"_id": commentID}},
 		{
 			"$lookup": bson.M{
 				"from":         "users",
@@ -148,14 +146,87 @@ func (r *commentRepository) GetCommentsWithDetails(ctx context.Context, taskID b
 		},
 	}
 
-	// Add sorting
-	sortOrder := 1 // Default ascending (oldest first)
+	cursor, err := r.collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	if cursor.Next(ctx) {
+		var result struct {
+			Comment        *entities.Comment `bson:",inline"`
+			Author         *entities.User    `bson:"author"`
+			MentionedUsers []*entities.User  `bson:"mentionedUsers"`
+			Task           *entities.Task    `bson:"task"`
+		}
+
+		if err := cursor.Decode(&result); err != nil {
+			return nil, err
+		}
+
+		return &repositories.CommentWithDetails{
+			Comment:        result.Comment,
+			Author:         result.Author,
+			MentionedUsers: result.MentionedUsers,
+			Task:           result.Task,
+		}, nil
+	}
+
+	return nil, nil
+}
+
+func (r *commentRepository) GetCommentsWithDetails(ctx context.Context, taskID bson.ObjectID, filter repositories.CommentFilter) ([]*repositories.CommentWithDetails, error) {
+	match := bson.M{}
+	if taskID != bson.NilObjectID {
+		match["taskId"] = taskID
+	}
+	if filter.Type != "" {
+		match["type"] = filter.Type
+	}
+	if filter.AuthorID != nil {
+		match["authorId"] = *filter.AuthorID
+	}
+	pipeline := []bson.M{
+		{"$match": match},
+		{
+			"$lookup": bson.M{
+				"from":         "users",
+				"localField":   "authorId",
+				"foreignField": "_id",
+				"as":           "author",
+			},
+		},
+		{
+			"$lookup": bson.M{
+				"from":         "users",
+				"localField":   "mentions",
+				"foreignField": "_id",
+				"as":           "mentionedUsers",
+			},
+		},
+		{
+			"$lookup": bson.M{
+				"from":         "tasks",
+				"localField":   "taskId",
+				"foreignField": "_id",
+				"as":           "task",
+			},
+		},
+		{
+			"$addFields": bson.M{
+				"author": bson.M{"$arrayElemAt": []interface{}{"$author", 0}},
+				"task":   bson.M{"$arrayElemAt": []interface{}{"$task", 0}},
+			},
+		},
+	}
+
+	sortOrder := 1
 	if filter.SortOrder == "desc" {
 		sortOrder = -1
 	}
 	pipeline = append(pipeline, bson.M{"$sort": bson.D{{Key: "createdAt", Value: sortOrder}}})
 
-	// Add pagination
+	// Pagination
 	if filter.Page > 0 && filter.Limit > 0 {
 		skip := (filter.Page - 1) * filter.Limit
 		pipeline = append(pipeline,
@@ -318,13 +389,6 @@ func (r *commentRepository) buildCommentFilter(taskID bson.ObjectID, filter repo
 
 	if filter.AuthorID != nil {
 		mongoFilter["authorId"] = *filter.AuthorID
-	}
-
-	if filter.IsDeleted != nil {
-		mongoFilter["isDeleted"] = *filter.IsDeleted
-	} else {
-		// Default to not deleted
-		mongoFilter["isDeleted"] = false
 	}
 
 	return mongoFilter

@@ -2,6 +2,7 @@ package utils
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"strings"
 	"time"
@@ -35,7 +36,7 @@ func ValidateStruct(s interface{}, lang string) error {
 // ParseAndValidate parses request body and validates it
 func ParseAndValidate(c *fiber.Ctx, dest interface{}, lang string) error {
 	if err := c.BodyParser(dest); err != nil {
-		return errors.New("invalid request body")
+		return fmt.Errorf("invalid request body %v", err)
 	}
 
 	return ValidateStruct(dest, lang)

@@ -2,23 +2,22 @@ package utils
 
 import (
 	"math"
-	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 const (
-	DefaultPageSize = 20
-	MaxPageSize     = 100
-	DefaultSortBy   = "createdAt"
-	DefaultSortDir  = "desc"
+	DefaultPageSize  = 20
+	MaxPageSize      = 100
+	DefaultSortBy    = "createdAt"
+	DefaultSortOrder = "desc"
 )
 
-type PaginationParams struct {
-	Page    int    `json:"page" validate:"min=1"`
-	Limit   int    `json:"limit" validate:"min=1,max=100"`
-	SortBy  string `json:"sort_by"`
-	SortDir string `json:"sort_dir" validate:"oneof=asc desc"`
+type BaseFilter struct {
+	Page      int    `json:"page"`
+	Limit     int    `json:"limit"`
+	SortBy    string `json:"Sort_by"`
+	SortOrder string `json:"Sort_order"`
 }
 
 // PageMetadata represents paginated response metadata
@@ -33,70 +32,60 @@ type PageMetadata struct {
 
 // Page represents a paginated response with data
 type Page[T any] struct {
-	Data     []T          `json:"data"`
+	List     []T          `json:"list"`
 	Metadata PageMetadata `json:"metadata"`
 }
 
-// ParseFromFiber parses pagination from query parameters
-func ParseFromFiber(c *fiber.Ctx) *PaginationParams {
-	page := parseInt(c.Query("page"), 1)
-	pageSize := parseInt(c.Query("limit"), DefaultPageSize)
-
-	if page < 1 {
-		page = 1
+func (f *BaseFilter) WithDefaults() *BaseFilter {
+	if f.Page < 1 {
+		f.Page = 1
 	}
-	if pageSize < 1 {
-		pageSize = DefaultPageSize
+	if f.Limit < 1 {
+		f.Limit = DefaultPageSize
 	}
-	if pageSize > MaxPageSize {
-		pageSize = MaxPageSize
+	if f.Limit > MaxPageSize {
+		f.Limit = MaxPageSize
 	}
-
-	sortBy := c.Query("sort_by", DefaultSortBy)
-	sortDir := c.Query("sort_dir", DefaultSortDir)
-
-	if sortDir != "asc" && sortDir != "desc" {
-		sortDir = DefaultSortDir
+	if f.SortBy == "" {
+		f.SortBy = DefaultSortBy
 	}
-
-	return &PaginationParams{
-		Page:    page,
-		Limit:   pageSize,
-		SortBy:  sortBy,
-		SortDir: sortDir,
+	if f.SortOrder != "asc" && f.SortOrder != "desc" {
+		f.SortOrder = DefaultSortOrder
 	}
+	return f
 }
 
-func (p *PaginationParams) GetLimit() int {
-	return p.Limit
+func ParseFilterFromFiber[T any](c *fiber.Ctx) (*T, error) {
+	var filter T
+	if err := c.QueryParser(&filter); err != nil {
+		return nil, err
+	}
+
+	// Apply pagination defaults if T embeds BaseFilter
+	if f, ok := any(&filter).(interface{ WithDefaults() *BaseFilter }); ok {
+		f.WithDefaults()
+	}
+
+	return &filter, nil
 }
 
-func (p *PaginationParams) ToMetadata(totalItems int64) PageMetadata {
-	totalPages := int(math.Ceil(float64(totalItems) / float64(p.Limit)))
+func (f *BaseFilter) ToMetadata(totalItems int64) PageMetadata {
+	totalPages := int(math.Ceil(float64(totalItems) / float64(f.Limit)))
 
 	return PageMetadata{
-		Page:       p.Page,
-		Limit:      p.Limit,
+		Page:       f.Page,
+		Limit:      f.Limit,
 		TotalItems: totalItems,
 		TotalPages: totalPages,
-		HasNext:    p.Page < totalPages,
-		HasPrev:    p.Page > 1,
+		HasNext:    f.Page < totalPages,
+		HasPrev:    f.Page > 1,
 	}
 }
 
 // NewPage wraps data and metadata together
-func NewPage[T any](items []T, req *PaginationParams, total int64) *Page[T] {
+func NewPage[T any](items []T, req *BaseFilter, total int64) *Page[T] {
 	return &Page[T]{
-		Data:     items,
+		List:     items,
 		Metadata: req.ToMetadata(total),
 	}
-}
-
-// parseInt converts string to int, fallback on failure
-func parseInt(str string, fallback int) int {
-	n, err := strconv.Atoi(str)
-	if err != nil {
-		return fallback
-	}
-	return n
 }

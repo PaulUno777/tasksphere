@@ -18,7 +18,6 @@ type CategoryHandler struct {
 	i18n            services.I18nService
 }
 
-// NewUserHandler creates a new user handler
 func NewCategoryHandler(categoryUseCase *category.UseCase, i18n services.I18nService) *CategoryHandler {
 	return &CategoryHandler{
 		categoryUseCase: categoryUseCase,
@@ -26,7 +25,6 @@ func NewCategoryHandler(categoryUseCase *category.UseCase, i18n services.I18nSer
 	}
 }
 
-// CreateCategory creates a new category
 func (h *CategoryHandler) CreateCategory(c *fiber.Ctx) error {
 	lang := c.Get("Accept-Language", "en")
 	userID := middleware.GetUserIDFromContext(c)
@@ -49,7 +47,6 @@ func (h *CategoryHandler) CreateCategory(c *fiber.Ctx) error {
 	return utils.CreatedResponse(c, response, h.i18n.T(lang, "messages.category_created"))
 }
 
-// GetBoardCategories gets all categories for a board
 func (h *CategoryHandler) GetBoardCategories(c *fiber.Ctx) error {
 	lang := c.Get("Accept-Language", "en")
 	userID := middleware.GetUserIDFromContext(c)
@@ -87,7 +84,6 @@ func (h *CategoryHandler) GetCategory(c *fiber.Ctx) error {
 	return utils.SuccessResponse(c, response, "")
 }
 
-// UpdateCategory updates a category
 func (h *CategoryHandler) UpdateCategory(c *fiber.Ctx) error {
 	lang := c.Get("Accept-Language", "en")
 	userID := middleware.GetUserIDFromContext(c)
@@ -110,7 +106,6 @@ func (h *CategoryHandler) UpdateCategory(c *fiber.Ctx) error {
 	return utils.SuccessResponse(c, response, h.i18n.T(lang, "messages.category_updated"))
 }
 
-// UpdateCategoryPosition updates category position
 func (h *CategoryHandler) UpdateCategoryPosition(c *fiber.Ctx) error {
 	lang := c.Get("Accept-Language", "en")
 	userID := middleware.GetUserIDFromContext(c)
@@ -130,7 +125,6 @@ func (h *CategoryHandler) UpdateCategoryPosition(c *fiber.Ctx) error {
 	return utils.SuccessResponse(c, response, h.i18n.T(lang, "messages.category_position_updated"))
 }
 
-// DeleteCategory deletes a category
 func (h *CategoryHandler) DeleteCategory(c *fiber.Ctx) error {
 	lang := c.Get("Accept-Language", "en")
 	userID := middleware.GetUserIDFromContext(c)

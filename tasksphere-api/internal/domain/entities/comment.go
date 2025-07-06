@@ -20,6 +20,7 @@ type Comment struct {
 
 	// Features
 	IsEdited     bool       `bson:"isEdited"`
+	IsDeleted    bool       `bson:"isDeleted"`
 	LastEditedAt *time.Time `bson:"lastEditedAt,omitempty"`
 }
 
@@ -29,8 +30,12 @@ type CommentReaction struct {
 	AddedAt time.Time     `bson:"addedAt"`
 }
 
+func (c *Comment) IsVisible() bool {
+	return !c.IsDeleted
+}
+
 func (c *Comment) CanBeEdited() bool {
-	return  c.Type == CommentTypeRegular
+	return !c.IsDeleted && c.Type == CommentTypeRegular
 }
 
 func (c *Comment) Edit(content string, userID bson.ObjectID) {
@@ -41,10 +46,17 @@ func (c *Comment) Edit(content string, userID bson.ObjectID) {
 	}
 }
 
+func (c *Comment) SoftDelete(userID bson.ObjectID) {
+	if c.AuthorID == userID {
+		c.IsDeleted = true
+		c.UpdateTimestamp()
+	}
+}
+
 func (c *Comment) AddReaction(userID bson.ObjectID, emoji string) {
 	// Remove existing reaction from same user with same emoji
 	c.RemoveReaction(userID, emoji)
-	
+
 	// Add new reaction
 	reaction := CommentReaction{
 		UserID:  userID,

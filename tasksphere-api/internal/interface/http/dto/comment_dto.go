@@ -1,7 +1,7 @@
 package dto
 
 type CreateCommentRequest struct {
-	Content  string   `json:"content" validate:"required,min=1,max=1000"`
+	Content  string   `json:"content" validate:"required,min=4,max=1000"`
 	Mentions []string `json:"mentions" validate:"omitempty,dive"`
 }
 
@@ -15,23 +15,23 @@ type AddReactionRequest struct {
 }
 
 type CommentReactionResponse struct {
-	User    *UserResponse `json:"user"`
-	Emoji   string        `json:"emoji"`
-	AddedAt string        `json:"addedAt"`
+	User    *UserMinimal `json:"user"`
+	Emoji   string       `json:"emoji"`
+	AddedAt string       `json:"addedAt"`
 }
 
 type CommentResponse struct {
-	ID           string                    `json:"id"`
-	Content      string                    `json:"content"`
-	Author       *UserResponse             `json:"author"`
-	TaskID       string                    `json:"taskId"`
-	Type         string                    `json:"type"`
-	IsEdited     bool                      `json:"isEdited"`
-	LastEditedAt *string                   `json:"lastEditedAt,omitempty"`
-	Reactions    []CommentReactionResponse `json:"reactions,omitempty"`
-	Mentions     []string                  `json:"mentions,omitempty"`
-	CreatedAt    string                    `json:"createdAt"`
-	UpdatedAt    string                    `json:"updatedAt"`
+	ID           string                     `json:"id"`
+	Content      string                     `json:"content"`
+	Author       *UserMinimal               `json:"author"`
+	TaskID       string                     `json:"taskId"`
+	Type         string                     `json:"type"`
+	IsEdited     bool                       `json:"isEdited"`
+	LastEditedAt *string                    `json:"lastEditedAt,omitempty"`
+	Reactions    []*CommentReactionResponse `json:"reactions,omitempty"`
+	Mentions     []*UserMinimal             `json:"mentions,omitempty"`
+	CreatedAt    string                     `json:"createdAt"`
+	UpdatedAt    string                     `json:"updatedAt"`
 
 	// Permissions
 	CanEdit   bool `json:"canEdit"`

@@ -1,0 +1,111 @@
+<app-card variant="elevated" 
+[hasHeader]="true"
+[hasFooter]="true">
+  <!-- Header -->
+  <div slot="header" class="text-center">
+    <h2 class="text-2xl font-bold text-text-strong mb-2">Welcome Back</h2>
+    <p class="text-text-muted">
+      Don't have an account?
+      <a
+        routerLink="/auth/register"
+        class="font-medium text-primary-600 hover:text-primary-500 transition-colors"
+      >
+        Sign up
+      </a>
+    </p>
+  </div>
+
+  <!-- Content -->
+  <div class="space-y-6">
+    <!-- Error Alert -->
+    @if (authStore.hasError()) {
+    <app-alert
+      variant="danger"
+      [message]="authStore.error() || ''"
+      [dismissible]="true"
+      (dismissed)="authStore.clearError()"
+    ></app-alert>
+    }
+
+    <!-- Login Form -->
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-4">
+      <!-- Email Field -->
+      <app-form-field
+        label="Email"
+        placeholder="Enter your email"
+        type="email"
+        [leftIcon]="Mail"
+        [required]="true"
+        class="input-default"
+        [error]="getFieldError('email')"
+        formControlName="email"
+        autocomplete="email"
+      ></app-form-field>
+
+      <!-- Password Field -->
+      <app-form-field
+        label="Password"
+        placeholder="Enter your password"
+        type="password"
+        [leftIcon]="Lock"
+        [rightIcon]="EyeOff"
+        [required]="true"
+        [error]="getFieldError('password')"
+        [showPasswordToggle]="true"
+        formControlName="password"
+        autocomplete="current-password"
+      ></app-form-field>
+
+      <!-- Remember Me & Forgot Password -->
+      <div class="flex items-center justify-between">
+        <app-checkbox
+          label="Remember me"
+          formControlName="rememberMe"
+        ></app-checkbox>
+
+        <a
+          routerLink="/auth/forgot-password"
+          class="text-sm text-primary-600 hover:text-primary-500 transition-colors"
+        >
+          Forgot password?
+        </a>
+      </div>
+
+      <!-- Submit Button -->
+      <app-button
+        type="submit"
+        variant="primary"
+        size="lg"
+        [fullWidth]="true"
+        [disabled]="loginForm.invalid"
+        [loading]="authStore.isLoading()"
+        [leftIcon]="LogIn"
+        content="Sign In"
+      ></app-button>
+    </form>
+
+    <!-- Divider -->
+    <div class="relative my-6">
+      <div class="absolute inset-0 flex items-center">
+        <div class="w-full border-t border-border-default"></div>
+      </div>
+      <div class="relative flex justify-center text-sm">
+        <span class="px-2 bg-background text-text-muted">{{
+          i18n.translate("common.or")
+        }}</span>
+      </div>
+    </div>
+
+    <!-- Google OAuth Button -->
+    <app-button
+      type="button"
+      variant="outline"
+      size="lg"
+      [fullWidth]="true"
+      [disabled]="authStore.isLoading()"
+      [leftIcon]="Chrome"
+      content="Sign in with Google"
+      (clicked)="onGoogleLogin()"
+    ></app-button>
+  </div>
+</app-card>

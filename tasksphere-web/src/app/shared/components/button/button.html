@@ -1,0 +1,31 @@
+<button
+  [type]="type"
+  [disabled]="disabled || loading"
+  [class]="buttonClasses()"
+  (click)="onClick()"
+>
+  @if (loading) {
+  <lucide-icon
+    [img]="loaderIcon"
+    [size]="iconSize()"
+    class="animate-spin"
+    [class.mr-2]="!!content"
+  ></lucide-icon>
+  } @else if (leftIcon) {
+  <lucide-icon
+    [img]="leftIcon"
+    [size]="iconSize()"
+    [class.mr-2]="!!content"
+  ></lucide-icon>
+  } @if (content) {
+  <span>{{ content }}</span>
+  } @else {
+  <ng-content></ng-content>
+  } @if (rightIcon && !loading) {
+  <lucide-icon
+    [img]="rightIcon"
+    [size]="iconSize()"
+    [class.ml-2]="!!content"
+  ></lucide-icon>
+  }
+</button>

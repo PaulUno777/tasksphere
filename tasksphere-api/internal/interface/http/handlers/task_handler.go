@@ -135,7 +135,7 @@ func (h *TaskHandler) UpdateTask(c *fiber.Ctx) error {
 		return errors.NewValidationError(err.Error())
 	}
 
-	response, err := h.taskUseCase.UpdateTask(c.Context(), taskID, userID, &req, lang)
+	response, err := h.taskUseCase.UpdateTask(c.Context(), userID, taskID, &req, lang)
 	if err != nil {
 		return err
 	}
@@ -157,7 +157,7 @@ func (h *TaskHandler) UpdateTaskStatus(c *fiber.Ctx) error {
 		return errors.NewValidationError(err.Error())
 	}
 
-	response, err := h.taskUseCase.UpdateTaskStatus(c.Context(), taskID, userID, &req, lang)
+	response, err := h.taskUseCase.UpdateTaskStatus(c.Context(), userID, taskID, &req, lang)
 	if err != nil {
 		return err
 	}
@@ -179,7 +179,7 @@ func (h *TaskHandler) UpdateTaskPosition(c *fiber.Ctx) error {
 		return errors.NewValidationError(err.Error())
 	}
 
-	response, err := h.taskUseCase.UpdateTaskPosition(c.Context(), taskID, userID, &req, lang)
+	response, err := h.taskUseCase.UpdateTaskPosition(c.Context(), userID, taskID, &req, lang)
 	if err != nil {
 		return err
 	}
@@ -201,7 +201,7 @@ func (h *TaskHandler) AssignTask(c *fiber.Ctx) error {
 		return errors.NewValidationError(err.Error())
 	}
 
-	response, err := h.taskUseCase.AssignTask(c.Context(), taskID, userID, &req, lang)
+	response, err := h.taskUseCase.AssignTask(c.Context(), userID, taskID, &req, lang)
 	if err != nil {
 		return err
 	}
@@ -218,7 +218,7 @@ func (h *TaskHandler) ArchiveTask(c *fiber.Ctx) error {
 		return errors.NewBadRequestError(h.i18n.T(lang, "errors.invalid_task_id"))
 	}
 
-	err = h.taskUseCase.ArchiveTask(c.Context(), taskID, userID, lang)
+	err = h.taskUseCase.ArchiveTask(c.Context(), userID, taskID, lang)
 	if err != nil {
 		return err
 	}
@@ -235,7 +235,7 @@ func (h *TaskHandler) RestoreTask(c *fiber.Ctx) error {
 		return errors.NewBadRequestError(h.i18n.T(lang, "errors.invalid_task_id"))
 	}
 
-	err = h.taskUseCase.RestoreTask(c.Context(), taskID, userID, lang)
+	err = h.taskUseCase.RestoreTask(c.Context(), userID, taskID, lang)
 	if err != nil {
 		return err
 	}
@@ -252,7 +252,7 @@ func (h *TaskHandler) DeleteTask(c *fiber.Ctx) error {
 		return errors.NewBadRequestError(h.i18n.T(lang, "errors.invalid_task_id"))
 	}
 
-	err = h.taskUseCase.DeleteTask(c.Context(), userID, taskID, lang)
+	err = h.taskUseCase.DeleteTask(c.Context(), taskID, userID, lang)
 	if err != nil {
 		return err
 	}

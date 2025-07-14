@@ -82,3 +82,5 @@ temp/
 # Cache
 .cache/
 .parcel-cache/
+
+tasksphere_api_endpoints.txt

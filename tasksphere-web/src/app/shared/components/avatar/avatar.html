@@ -1,0 +1,18 @@
+<div [class]="avatarClasses()">
+  @if (src && !imageError) {
+  <img
+    [src]="src"
+    [alt]="alt || name"
+    [class]="imageClasses()"
+    (error)="onImageError()"
+  />
+  } @else {
+  <div [class]="fallbackClasses()" [style.background-color]="backgroundColor">
+    <span [class]="initialsClasses()">{{ initials() }}</span>
+  </div>
+  } @if (showStatus) {
+  <div [class]="statusClasses()">
+    <div [class]="statusDotClasses()"></div>
+  </div>
+  }
+</div>

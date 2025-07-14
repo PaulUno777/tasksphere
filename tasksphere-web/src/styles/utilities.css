@@ -1,0 +1,256 @@
+/* Custom Background Utilities */
+.bg-background {
+  background-color: var(--color-background);
+}
+.bg-background-secondary {
+  background-color: var(--color-background-secondary);
+}
+.bg-surface {
+  background-color: var(--color-surface);
+}
+.bg-surface-secondary {
+  background-color: var(--color-surface-secondary);
+}
+
+/* Custom Text Utilities */
+@utility text-primary {
+  color: var(--color-text-primary);
+}
+@utility text-secondary {
+  color: var(--color-text-secondary);
+}
+@utility text-tertiary {
+  color: var(--color-text-tertiary);
+}
+
+/* Custom Border Utilities */
+@utility border-default {
+  border-color: var(--color-border);
+}
+@utility border-secondary {
+  border-color: var(--color-border-secondary);
+}
+
+/* Glass Effect */
+@utility glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Hover Animations */
+@utility hover-lift {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+@utility hover-lift-hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Focus States */
+@utility focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+}
+
+@utility focus-ring-dark {
+  @apply focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-offset-2 focus:ring-offset-gray-800;
+}
+
+@utility input-base {
+  @apply w-full transition-all duration-200 border-secondary-700 focus:outline-none;
+}
+
+@utility input-default {
+  @apply input-base px-3 py-2 border border-border-default rounded-lg bg-surface text-text-default 
+       placeholder:text-text-muted focus:ring-2 focus:ring-primary-500 focus:border-primary-500;
+}
+
+@utility input-filled {
+  @apply input-base px-3 py-2 border-0 rounded-lg bg-surface-muted text-text-default 
+       placeholder:text-text-muted focus:ring-2 focus:ring-primary-500 focus:bg-surface;
+}
+
+@utility input-outlined {
+  @apply input-base px-3 py-2 border-2 border-border-default rounded-lg bg-transparent text-text-default 
+       placeholder:text-text-muted focus:border-primary-500;
+}
+
+@utility input-sm {
+  @apply text-sm px-2.5 py-1.5;
+}
+
+@utility input-lg {
+  @apply text-lg px-4 py-3;
+}
+
+@utility input-error {
+  @apply border-danger-500 focus:ring-danger-500 focus:border-danger-500;
+}
+
+@utility input-success {
+  @apply border-success-500 focus:ring-success-500 focus:border-success-500;
+}
+
+@utility input-disabled {
+  @apply opacity-50 cursor-not-allowed bg-surface-muted;
+}
+
+@utility form-input-disabled {
+  @apply bg-gray-50 dark:bg-gray-800 cursor-not-allowed opacity-50;
+}
+
+/* Modals */
+@utility modal-base {
+  @apply bg-surface rounded-lg shadow-xl max-h-[90vh] overflow-hidden;
+}
+
+@utility modal-sm {
+  @apply modal-base w-full max-w-sm;
+}
+
+@utility modal-md {
+  @apply modal-base w-full max-w-md;
+}
+
+@utility modal-lg {
+  @apply modal-base w-full max-w-lg;
+}
+
+@utility modal-xl {
+  @apply modal-base w-full max-w-4xl;
+}
+
+@utility modal-full {
+  @apply modal-base w-full max-w-[95vw] h-[95vh];
+}
+
+/* Badge  */
+
+@utility badge-base {
+  @apply inline-flex items-center font-medium rounded-full;
+}
+
+@utility badge-default {
+  @apply badge-base bg-neutral-100 text-neutral-800;
+}
+
+@utility badge-primary {
+  @apply badge-base bg-primary-100 text-primary-800;
+}
+
+@utility badge-secondary {
+  @apply badge-base bg-secondary-100 text-secondary-800;
+}
+
+@utility badge-success {
+  @apply badge-base bg-success-100 text-success-800;
+}
+
+@utility badge-warning {
+  @apply badge-base bg-warning-100 text-warning-800;
+}
+
+@utility badge-danger {
+  @apply badge-base bg-danger-100 text-danger-800;
+}
+
+@utility badge-sm {
+  @apply px-2 py-0.5 text-xs;
+}
+
+@utility badge-md {
+  @apply px-2.5 py-1 text-sm;
+}
+
+@utility badge-lg {
+  @apply px-3 py-1.5 text-base;
+}
+
+/* Card base */
+@utility card-base {
+  @apply rounded-lg transition-all duration-200 flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8;
+}
+
+@utility card-default {
+  @apply card-base;
+}
+
+@utility card-outlined {
+  @apply card-base border border-border-default;
+}
+
+@utility card-elevated {
+  @apply card-base shadow-md hover:shadow-lg;
+}
+
+/* Alert */
+
+@utility alert-base {
+  @apply rounded-lg p-4 animate-bounce;
+}
+
+@utility alert-info {
+  @apply alert-base bg-primary-50 border border-primary-200;
+}
+
+@utility alert-success {
+  @apply alert-base bg-success-50 border border-success-200;
+}
+
+@utility alert-warning {
+  @apply alert-base bg-warning-50 border border-warning-200;
+}
+
+@utility alert-danger {
+  @apply alert-base bg-danger-50 border border-danger-200;
+}
+
+/* //button  */
+@utility btn-base {
+  @apply inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 
+       focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+@utility btn-primary {
+  @apply btn-base bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500;
+}
+
+@utility btn-secondary {
+  @apply btn-base bg-secondary-600 text-white hover:bg-secondary-700 focus:ring-secondary-500;
+}
+
+@utility btn-outline {
+  @apply btn-base border border-border-default text-text-default bg-transparent hover:bg-surface-muted focus:ring-primary-500;
+}
+
+@utility btn-ghost {
+  @apply btn-base text-text-default bg-transparent hover:bg-surface-muted focus:ring-primary-500;
+}
+
+@utility btn-danger {
+  @apply btn-base bg-danger-600 text-white hover:bg-danger-700 focus:ring-danger-500;
+}
+
+@utility btn-success {
+  @apply btn-base bg-success-600 text-white hover:bg-success-700 focus:ring-success-500;
+}
+
+@utility btn-xs {
+  @apply px-2 py-1 text-xs;
+}
+
+@utility btn-sm {
+  @apply px-3 py-1.5 text-sm;
+}
+
+@utility btn-md {
+  @apply px-4 py-2 text-sm;
+}
+
+@utility btn-lg {
+  @apply px-6 py-3 text-base;
+}
+
+@utility btn-xl {
+  @apply px-8 py-4 text-lg;
+}

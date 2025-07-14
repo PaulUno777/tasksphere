@@ -64,7 +64,6 @@ func (r *taskRepository) GetByID(ctx context.Context, id bson.ObjectID) (*entiti
 	return &task, nil
 }
 
-// GetByAssignee implements repositories.TaskRepository.
 func (r *taskRepository) GetByAssignee(ctx context.Context, userID bson.ObjectID, filter repositories.TaskFilter) ([]*entities.Task, int64, error) {
 	mongoFilter := r.buildTaskFilter(bson.NilObjectID, filter)
 	mongoFilter["assignedTo"] = userID
@@ -93,7 +92,6 @@ func (r *taskRepository) GetByAssignee(ctx context.Context, userID bson.ObjectID
 	return tasks, total, nil
 }
 
-// GetByBoard implements repositories.TaskRepository.
 func (r *taskRepository) GetByBoard(ctx context.Context, boardID bson.ObjectID, filter repositories.TaskFilter) ([]*entities.Task, int64, error) {
 	mongoFilter := r.buildTaskFilter(boardID, filter)
 	total, err := r.collection.CountDocuments(ctx, mongoFilter)
@@ -119,7 +117,6 @@ func (r *taskRepository) GetByBoard(ctx context.Context, boardID bson.ObjectID, 
 	return tasks, total, nil
 }
 
-// GetByCategory implements repositories.TaskRepository.
 func (r *taskRepository) GetByCategory(ctx context.Context, categoryID bson.ObjectID, filter repositories.TaskFilter) ([]*entities.Task, int64, error) {
 	mongoFilter := r.buildTaskFilter(bson.NilObjectID, filter)
 	mongoFilter["categoryId"] = categoryID
@@ -148,7 +145,6 @@ func (r *taskRepository) GetByCategory(ctx context.Context, categoryID bson.Obje
 	return tasks, total, nil
 }
 
-// GetOverdueTasks implements repositories.TaskRepository.
 func (r *taskRepository) GetOverdueTasks(ctx context.Context, boardID bson.ObjectID) ([]*entities.Task, error) {
 	filter := bson.M{
 		"boardId": boardID,
@@ -176,7 +172,6 @@ func (r *taskRepository) GetOverdueTasks(ctx context.Context, boardID bson.Objec
 	return tasks, nil
 }
 
-// GetTasksForKanban implements repositories.TaskRepository.
 func (r *taskRepository) GetTasksForKanban(ctx context.Context, boardID bson.ObjectID) (map[entities.TaskStatus][]*entities.Task, error) {
 	filter := bson.M{
 		"boardId": boardID,
@@ -211,52 +206,97 @@ func (r *taskRepository) GetTasksForKanban(ctx context.Context, boardID bson.Obj
 	return result, nil
 }
 
-// GetTasksWithDetails implements repositories.TaskRepository.
+func (r *taskRepository) GetTaskWithDetails(ctx context.Context, taskID bson.ObjectID) (*repositories.TaskWithDetails, error) {
+	pipeline := []bson.M{
+		{"$match": bson.M{"_id": taskID}},
+		lookupSingle("boards", "boardId", "_id", "board"),
+		lookupSingle("categories", "categoryId", "_id", "category"),
+		lookupSingle("users", "assignedTo", "_id", "assignedUser"),
+		lookupSingle("users", "createdBy", "_id", "creator"),
+		lookupSingle("users", "lastEditedBy", "_id", "lastEditor"),
+		{
+			"$lookup": bson.M{
+				"from": "comments",
+				"let":  bson.M{"taskId": "$_id"},
+				"pipeline": []bson.M{
+					{
+						"$match": bson.M{
+							"$expr": bson.M{
+								"$and": []bson.M{
+									{"$eq": []interface{}{"$taskId", "$$taskId"}},
+									{"$eq": []interface{}{"$isDeleted", false}},
+								},
+							},
+						},
+					},
+					{"$count": "total"},
+				},
+				"as": "commentCount",
+			},
+		},
+		// Flatten single-element arrays + fallback
+		{
+			"$addFields": bson.M{
+				"board":        bson.M{"$arrayElemAt": []interface{}{"$board", 0}},
+				"category":     bson.M{"$arrayElemAt": []interface{}{"$category", 0}},
+				"assignedUser": bson.M{"$arrayElemAt": []interface{}{"$assignedUser", 0}},
+				"creator":      bson.M{"$arrayElemAt": []interface{}{"$creator", 0}},
+				"lastEditor":   bson.M{"$arrayElemAt": []interface{}{"$lastEditor", 0}},
+				"commentCount": bson.M{
+					"$ifNull": []interface{}{
+						bson.M{"$arrayElemAt": []interface{}{"$commentCount.total", 0}},
+						0,
+					},
+				},
+			},
+		},
+	}
+
+	cursor, err := r.collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	if cursor.Next(ctx) {
+		var result struct {
+			*entities.Task `bson:",inline"`
+			Board          *entities.Board    `bson:"board"`
+			Category       *entities.Category `bson:"category"`
+			AssignedUser   *entities.User     `bson:"assignedUser"`
+			Creator        *entities.User     `bson:"creator"`
+			LastEditor     *entities.User     `bson:"lastEditor"`
+			CommentCount   int64              `bson:"commentCount"`
+		}
+
+		if err := cursor.Decode(&result); err != nil {
+			return nil, err
+		}
+
+		return &repositories.TaskWithDetails{
+			Task:         result.Task,
+			Board:        result.Board,
+			Category:     result.Category,
+			AssignedUser: result.AssignedUser,
+			Creator:      result.Creator,
+			LastEditor:   result.LastEditor,
+			CommentCount: result.CommentCount,
+		}, nil
+	}
+
+	return nil, nil
+}
+
 func (r *taskRepository) GetTasksWithDetails(ctx context.Context, boardID bson.ObjectID, filter repositories.TaskFilter) ([]*repositories.TaskWithDetails, error) {
 	pipeline := []bson.M{
 		{
 			"$match": r.buildTaskFilter(boardID, filter),
 		},
-		{
-			"$lookup": bson.M{
-				"from":         "boards",
-				"localField":   "boardId",
-				"foreignField": "_id",
-				"as":           "board",
-			},
-		},
-		{
-			"$lookup": bson.M{
-				"from":         "categories",
-				"localField":   "categoryId",
-				"foreignField": "_id",
-				"as":           "category",
-			},
-		},
-		{
-			"$lookup": bson.M{
-				"from":         "users",
-				"localField":   "assignedTo",
-				"foreignField": "_id",
-				"as":           "assignedUser",
-			},
-		},
-		{
-			"$lookup": bson.M{
-				"from":         "users",
-				"localField":   "createdBy",
-				"foreignField": "_id",
-				"as":           "creator",
-			},
-		},
-		{
-			"$lookup": bson.M{
-				"from":         "users",
-				"localField":   "lastEditedBy",
-				"foreignField": "_id",
-				"as":           "lastEditor",
-			},
-		},
+		lookupSingle("boards", "boardId", "_id", "board"),
+		lookupSingle("categories", "categoryId", "_id", "category"),
+		lookupSingle("users", "assignedTo", "_id", "assignedUser"),
+		lookupSingle("users", "createdBy", "_id", "creator"),
+		lookupSingle("users", "lastEditedBy", "_id", "lastEditor"),
 		{
 			"$lookup": bson.M{
 				"from": "comments",
@@ -294,7 +334,6 @@ func (r *taskRepository) GetTasksWithDetails(ctx context.Context, boardID bson.O
 		},
 	}
 
-	// Add sorting
 	if filter.SortBy != "" {
 		sortField := filter.SortBy
 		sortOrder := 1
@@ -303,11 +342,9 @@ func (r *taskRepository) GetTasksWithDetails(ctx context.Context, boardID bson.O
 		}
 		pipeline = append(pipeline, bson.M{"$sort": bson.D{{Key: sortField, Value: sortOrder}}})
 	} else {
-		// Default sort by position
 		pipeline = append(pipeline, bson.M{"$sort": bson.D{{Key: "position", Value: 1}}})
 	}
 
-	// Add pagination
 	if filter.Page > 0 && filter.Limit > 0 {
 		skip := (filter.Page - 1) * filter.Limit
 		pipeline = append(pipeline,
@@ -323,13 +360,13 @@ func (r *taskRepository) GetTasksWithDetails(ctx context.Context, boardID bson.O
 	defer cursor.Close(ctx)
 
 	var results []struct {
-		Task         *entities.Task     `bson:",inline"`
-		Board        *entities.Board    `bson:"board"`
-		Category     *entities.Category `bson:"category"`
-		AssignedUser *entities.User     `bson:"assignedUser"`
-		Creator      *entities.User     `bson:"creator"`
-		LastEditor   *entities.User     `bson:"lastEditor"`
-		CommentCount int64              `bson:"commentCount"`
+		*entities.Task `bson:",inline"`
+		Board          *entities.Board    `bson:"board"`
+		Category       *entities.Category `bson:"category"`
+		AssignedUser   *entities.User     `bson:"assignedUser"`
+		Creator        *entities.User     `bson:"creator"`
+		LastEditor     *entities.User     `bson:"lastEditor"`
+		CommentCount   int64              `bson:"commentCount"`
 	}
 
 	if err := cursor.All(ctx, &results); err != nil {
@@ -352,14 +389,12 @@ func (r *taskRepository) GetTasksWithDetails(ctx context.Context, boardID bson.O
 	return tasksWithDetails, nil
 }
 
-// Update implements repositories.TaskRepository.
 func (r *taskRepository) Update(ctx context.Context, task *entities.Task) error {
 	task.UpdateTimestamp()
 	_, err := r.collection.ReplaceOne(ctx, bson.M{"_id": task.ID}, task)
 	return err
 }
 
-// UpdateAssignment implements repositories.TaskRepository.
 func (r *taskRepository) UpdateAssignment(ctx context.Context, taskID bson.ObjectID, assignedTo *bson.ObjectID, userID bson.ObjectID) error {
 	update := bson.M{
 		"$set": bson.M{
@@ -378,7 +413,6 @@ func (r *taskRepository) UpdateAssignment(ctx context.Context, taskID bson.Objec
 	return err
 }
 
-// UpdatePosition implements repositories.TaskRepository.
 func (r *taskRepository) UpdatePosition(ctx context.Context, taskID bson.ObjectID, position int, status entities.TaskStatus, userID bson.ObjectID) error {
 	update := bson.M{
 		"$set": bson.M{
@@ -393,7 +427,6 @@ func (r *taskRepository) UpdatePosition(ctx context.Context, taskID bson.ObjectI
 	return err
 }
 
-// UpdateStatus implements repositories.TaskRepository.
 func (r *taskRepository) UpdateStatus(ctx context.Context, taskID bson.ObjectID, status entities.TaskStatus, userID bson.ObjectID) error {
 	update := bson.M{
 		"$set": bson.M{
@@ -414,7 +447,6 @@ func (r *taskRepository) UpdateStatus(ctx context.Context, taskID bson.ObjectID,
 	return err
 }
 
-// CountByAssignee implements repositories.TaskRepository.
 func (r *taskRepository) CountByAssignee(ctx context.Context, userID bson.ObjectID, status entities.TaskStatus) (int64, error) {
 	filter := bson.M{"assignedTo": userID}
 	if status != "" {
@@ -424,7 +456,6 @@ func (r *taskRepository) CountByAssignee(ctx context.Context, userID bson.Object
 	return r.collection.CountDocuments(ctx, filter)
 }
 
-// CountByBoard implements repositories.TaskRepository.
 func (r *taskRepository) CountByBoard(ctx context.Context, boardID bson.ObjectID, status entities.TaskStatus) (int64, error) {
 	filter := bson.M{"boardId": boardID}
 	if status != "" {
@@ -434,13 +465,11 @@ func (r *taskRepository) CountByBoard(ctx context.Context, boardID bson.ObjectID
 	return r.collection.CountDocuments(ctx, filter)
 }
 
-// CountByCategory implements repositories.TaskRepository.
 func (r *taskRepository) CountByCategory(ctx context.Context, categoryID bson.ObjectID) (int64, error) {
 	filter := bson.M{"categoryId": categoryID}
 	return r.collection.CountDocuments(ctx, filter)
 }
 
-// Delete implements repositories.TaskRepository.
 func (r *taskRepository) Delete(ctx context.Context, id bson.ObjectID) error {
 	_, err := r.collection.DeleteOne(ctx, bson.M{"_id": id})
 	return err
@@ -528,4 +557,15 @@ func (r *taskRepository) buildFindOptions(filter repositories.TaskFilter) *optio
 	}
 
 	return opts
+}
+
+func lookupSingle(from, localField, foreignField, as string) bson.M {
+	return bson.M{
+		"$lookup": bson.M{
+			"from":         from,
+			"localField":   localField,
+			"foreignField": foreignField,
+			"as":           as,
+		},
+	}
 }

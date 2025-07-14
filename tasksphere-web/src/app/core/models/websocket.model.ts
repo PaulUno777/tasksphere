@@ -1,4 +1,4 @@
-import { BoardMember } from './board.model';
+import { BoardMember } from './member.model';
 import { NotificationPriority, NotificationType } from './notification.model';
 
 export interface WebSocketMessage {

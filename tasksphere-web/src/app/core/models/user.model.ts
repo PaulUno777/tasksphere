@@ -1,26 +1,22 @@
+import { SupportedLanguage } from '@core/types';
+
 export interface User {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
+  fullName: string;
+  language: SupportedLanguage;
+  avatarUrl?: string;
+  isActive: boolean;
+  isEmailVerified: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface LoginRequest {
+export interface UserSummary {
+  id: string;
   email: string;
-  password: string;
-}
-
-export interface RegisterRequest {
-  email: string;
-  firstName: string;
-  lastName: string;
-  password: string;
-}
-
-export interface AuthResponse {
-  user: User;
-  accessToken: string;
-  refreshToken: string;
+  firstName?: string;
+  lastName?: string;
 }

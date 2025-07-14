@@ -1,0 +1,351 @@
+@utility input-field {
+  @apply w-full px-3 py-2 border border-border-default rounded-lg bg-surface text-text-default 
+           placeholder:text-text-muted transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-surface-muted invalid:input-field-invalid
+           valid:input-field-valid-not-placeholder-shown;
+}
+
+@utility input-field-invalid {
+  @apply focus:ring-danger-500 focus:border-danger-500;
+}
+
+@utility input-field-valid-not-placeholder-shown {
+  @apply border-success-500 focus:ring-success-500 focus:border-success-500;
+}
+
+/* Enhanced button styles */
+@utility btn {
+  @apply inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 
+           focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed
+           active:scale-95;
+}
+
+@utility btn-primary {
+  @apply btn bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500
+           shadow-sm hover:shadow-md;
+}
+
+@utility btn-secondary {
+  @apply btn bg-secondary-600 text-white hover:bg-secondary-700 focus:ring-secondary-500;
+}
+
+@utility btn-outline {
+  @apply btn border border-border-default text-text-default bg-transparent 
+           hover:bg-surface-muted focus:ring-primary-500 hover:border-primary-300;
+}
+
+@utility btn-ghost {
+  @apply btn text-text-default bg-transparent hover:bg-surface-muted focus:ring-primary-500;
+}
+
+@utility btn-danger {
+  @apply btn bg-danger-600 text-white hover:bg-danger-700 focus:ring-danger-500;
+}
+
+@utility btn-success {
+  @apply btn bg-success-600 text-white hover:bg-success-700 focus:ring-success-500;
+}
+
+/* Button sizes */
+@utility btn-xs {
+  @apply px-2 py-1 text-xs;
+}
+
+@utility btn-sm {
+  @apply px-3 py-1.5 text-sm;
+}
+
+@utility btn-md {
+  @apply px-4 py-2 text-sm;
+}
+
+@utility btn-lg {
+  @apply px-6 py-3 text-base;
+}
+
+@utility btn-xl {
+  @apply px-8 py-4 text-lg;
+}
+
+/* Card components */
+@utility card {
+  @apply bg-surface border border-border-default rounded-lg shadow-sm;
+}
+
+@utility card-header {
+  @apply px-6 py-4 border-b border-border-default;
+}
+
+@utility card-body {
+  @apply px-6 py-4;
+}
+
+@utility card-footer {
+  @apply px-6 py-4 border-t border-border-default bg-surface-muted;
+}
+
+/* Modal components */
+@utility modal-overlay {
+  @apply fixed inset-0 z-50 flex items-center justify-center p-4 bg-overlay;
+}
+
+@utility modal-content {
+  @apply bg-surface rounded-lg shadow-xl max-h-[90vh] overflow-hidden w-full;
+}
+
+@utility modal-header {
+  @apply px-6 py-4 border-b border-border-default flex items-center justify-between;
+}
+
+@utility modal-body {
+  @apply px-6 py-4 overflow-y-auto;
+}
+
+@utility modal-footer {
+  @apply px-6 py-4 border-t border-border-default flex items-center justify-end space-x-3;
+}
+
+/* Dropdown components */
+@utility dropdown-menu {
+  @apply bg-surface border border-border-default rounded-lg shadow-lg z-50 py-1 min-w-48;
+}
+
+@utility dropdown-item {
+  @apply w-full flex items-center px-4 py-2 text-sm text-text-default 
+           hover:bg-surface-muted transition-colors duration-200 cursor-pointer disabled:dropdown-item-disabled;
+}
+
+@utility dropdown-item-disabled {
+  @apply opacity-50 cursor-not-allowed hover:bg-transparent;
+}
+
+@utility dropdown-divider {
+  @apply h-px bg-border-default my-1;
+}
+
+/* Form components */
+@utility form-group {
+  @apply space-y-2;
+}
+
+@utility form-label {
+  @apply block text-sm font-medium text-text-default;
+}
+
+@utility form-error {
+  @apply text-sm text-danger-600;
+}
+
+@utility form-help {
+  @apply text-sm text-text-muted;
+}
+
+/* Table components */
+@utility table {
+  @apply w-full border-collapse;
+}
+
+@utility table-th {
+  @apply px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider
+           border-b border-border-default bg-surface-muted;
+}
+
+@utility table-td {
+  @apply px-6 py-4 whitespace-nowrap text-sm text-text-default border-b border-border-default;
+}
+
+@utility table-tbody-tr-hover {
+  @apply bg-surface-muted;
+}
+
+/* Navigation components */
+@utility nav-link {
+  @apply flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors 
+  duration-200 active:nav-link-active;
+}
+
+@utility nav-link-active {
+  @apply bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300;
+}
+
+@utility nav-link-hover-not-active {
+  @apply bg-surface-muted text-text-default;
+}
+
+/* Badge components */
+@utility badge {
+  @apply inline-flex items-center font-medium rounded-full;
+}
+
+@utility badge-sm {
+  @apply px-2 py-0.5 text-xs;
+}
+
+@utility badge-md {
+  @apply px-2 py-1 text-sm;
+}
+
+@utility badge-lg {
+  @apply px-3 py-1.5 text-base;
+}
+
+@utility badge-primary {
+  @apply bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-300;
+}
+
+@utility badge-secondary {
+  @apply bg-secondary-100 text-secondary-800 dark:bg-secondary-900 dark:text-secondary-300;
+}
+
+@utility badge-success {
+  @apply bg-success-100 text-success-800 dark:bg-success-900 dark:text-success-300;
+}
+
+@utility badge-warning {
+  @apply bg-warning-100 text-warning-800 dark:bg-warning-900 dark:text-warning-300;
+}
+
+@utility badge-danger {
+  @apply bg-danger-100 text-danger-800 dark:bg-danger-900 dark:text-danger-300;
+}
+
+/* Avatar components */
+@utility avatar {
+  @apply inline-flex items-center justify-center rounded-full bg-secondary-500 text-white font-medium;
+}
+
+@utility avatar-xs {
+  @apply w-6 h-6 text-xs;
+}
+
+@utility avatar-sm {
+  @apply w-8 h-8 text-sm;
+}
+
+@utility avatar-md {
+  @apply w-10 h-10 text-base;
+}
+
+@utility avatar-lg {
+  @apply w-12 h-12 text-lg;
+}
+
+@utility avatar-xl {
+  @apply w-16 h-16 text-xl;
+}
+
+/* Progress components */
+@utility progress {
+  @apply w-full bg-secondary-200 rounded-full overflow-hidden;
+}
+
+@utility progress-bar {
+  @apply h-full bg-primary-600 transition-all duration-300 ease-in-out;
+}
+
+/* Alert components */
+@utility alert {
+  @apply rounded-lg p-4 border-l-4;
+}
+
+@utility alert-info {
+  @apply bg-primary-50 border-l-primary-500 text-primary-700 dark:bg-primary-900 dark:text-primary-300;
+}
+
+@utility alert-success {
+  @apply bg-success-50 border-l-success-500 text-success-700 dark:bg-success-900 dark:text-success-300;
+}
+
+@utility alert-warning {
+  @apply bg-warning-50 border-l-warning-500 text-warning-700 dark:bg-warning-900 dark:text-warning-300;
+}
+
+@utility alert-danger {
+  @apply bg-danger-50 border-l-danger-500 text-danger-700 dark:bg-danger-900 dark:text-danger-300;
+}
+
+/* Skeleton loading components */
+@utility skeleton {
+  @apply bg-secondary-200 dark:bg-secondary-700 rounded animate-pulse;
+}
+
+@utility skeleton-text {
+  @apply skeleton h-4 w-full;
+}
+
+@utility skeleton-title {
+  @apply skeleton h-6 w-3/4;
+}
+
+@utility skeleton-avatar {
+  @apply skeleton w-10 h-10 rounded-full;
+}
+
+@utility skeleton-button {
+  @apply skeleton h-10 w-24 rounded-lg;
+}
+
+/* Utility classes */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(203 213 225) transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: rgb(203 213 225);
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(148 163 184);
+}
+
+/* Dark mode scrollbar */
+.dark {
+  scrollbar-color: rgb(71 85 105) transparent;
+}
+
+.scrollbar-thin {
+  scrollbar-color: rgb(71 85 105) transparent;
+}
+
+.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: rgb(71 85 105);
+}
+
+.dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(100 116 139);
+}
+
+/* Responsive utilities */
+@utility container-responsive {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+@utility grid-responsive {
+  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  * {
+    color-adjust: exact !important;
+  }
+}

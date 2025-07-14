@@ -337,7 +337,7 @@ func (uc *UseCase) DeleteBoard(ctx context.Context, boardID, userID bson.ObjectI
 }
 
 // GetBoardStats gets board statistics
-func (uc *UseCase) GetBoardStats(ctx context.Context, boardID, userID bson.ObjectID, lang string) (*dto.BoardStatsResponse, error) {
+func (uc *UseCase) GetBoardStats(ctx context.Context, userID, boardID bson.ObjectID, lang string) (*dto.BoardStatsResponse, error) {
 	member, err := uc.boardMemberRepo.GetByBoardAndUser(ctx, boardID, userID)
 	if err != nil || !member.IsActive() {
 		return nil, errors.NewNotFoundError(uc.localizer.T(lang, "errors.member_not_found"))

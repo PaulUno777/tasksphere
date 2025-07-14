@@ -8,17 +8,17 @@ import { provideEffects } from '@ngrx/effects';
 import { provideStore } from '@ngrx/store';
 
 import { routes } from './app.routes';
-import { authReducer } from '@store/auth/auth.reducer';
-import { AuthEffects } from '@store/auth/auth.effects';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideHttpClient(),
+    provideHttpClient(withInterceptors([])),
+    provideAnimationsAsync(),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-    provideStore({ authReducer }),
-    provideEffects([AuthEffects]),
+    provideStore({}),
+    provideEffects([]),
   ],
 };

@@ -1,0 +1,27 @@
+@utility nav-link {
+  @apply flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-text-muted hover:text-text-default hover:bg-surface-muted transition-colors duration-200;
+}
+
+@utility nav-link-active {
+  @apply text-primary-600 bg-primary-50;
+}
+
+@utility mobile-nav-link {
+  @apply flex items-center space-x-3 px-4 py-3 text-base font-medium text-text-muted hover:text-text-default hover:bg-surface-muted transition-colors duration-200;
+}
+
+@utility mobile-nav-link-active {
+  @apply text-primary-600 bg-primary-50;
+}
+
+@utility action-button {
+  @apply flex items-center space-x-1 p-2 rounded-lg text-text-muted hover:text-text-default hover:bg-surface-muted transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+}
+
+@utility dropdown-menu {
+  @apply absolute mt-2 py-2 bg-surface border border-border-default rounded-lg shadow-lg z-50 animate-fade-in;
+}
+
+@utility dropdown-item {
+  @apply flex items-center px-4 py-2 text-sm text-text-default hover:bg-surface-muted transition-colors duration-200;
+}

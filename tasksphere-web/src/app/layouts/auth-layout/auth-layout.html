@@ -1,0 +1,63 @@
+<div class="min-h-screen bg-background">
+  <!-- Background Pattern -->
+  <div
+    class="absolute inset-0 bg-gradient-to-br from-primary-50 to-accent-50 dark:from-primary-950 dark:to-accent-950 opacity-20"
+  ></div>
+
+  <!-- Geometric Shapes -->
+  <div class="absolute inset-0 overflow-hidden">
+    <div
+      class="absolute -top-40 -right-32 w-80 h-80 bg-primary-200 dark:bg-primary-800 rounded-full opacity-20 blur-3xl"
+    ></div>
+    <div
+      class="absolute -bottom-40 -left-32 w-80 h-80 bg-accent-200 dark:bg-accent-800 rounded-full opacity-20 blur-3xl"
+    ></div>
+    <div
+      class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-secondary-200 dark:bg-secondary-800 rounded-full opacity-10 blur-3xl"
+    ></div>
+  </div>
+
+  <!-- Content -->
+  <div class="relative z-10">
+    <!-- Top Bar -->
+    <header class="flex justify-between items-center p-6">
+      <!-- Logo -->
+      <div class="flex items-center space-x-3">
+        <img
+          src="assets/images/tasksphere_logo_02.png"
+          alt="TaskSphere Logo"
+          class="w-45 h-45 object-contain"
+        />
+      </div>
+
+      <!-- Controls -->
+      <div class="flex items-center space-x-3">
+        <app-language-selector></app-language-selector>
+        <app-theme-toggle></app-theme-toggle>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main
+      class="flex items-center justify-center min-h-[calc(100vh-12rem)] px-4"
+    >
+      <router-outlet></router-outlet>
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center p-6 text-text-default text-sm">
+      <p>&copy; 2024 TaskSphere. {{ i18n.t('common.and') }} rights reserved.</p>
+      <div class="mt-2 space-x-4">
+        <a href="#" class="hover:text-primary-900 transition-colors"
+          >{{ i18n.t('auth.privacyPolicy') }}</a
+        >
+        <a href="#" class="hover:text-primary-900 transition-colors"
+          >{{ i18n.t('auth.termsOfService') }}</a
+        >
+        <a href="#" class="hover:text-primary-900 transition-colors"
+          >{{ i18n.t('navigation.help') }}</a
+        >
+      </div>
+    </footer>
+  </div>
+</div>

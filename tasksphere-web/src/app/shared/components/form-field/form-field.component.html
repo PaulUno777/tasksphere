@@ -1,0 +1,133 @@
+<div>
+  <!-- Label -->
+  @if (label) {
+  <label
+    [for]="inputId"
+    class="block text-sm font-medium text-text-default mb-2"
+  >
+    {{ label }}
+    @if (required) {
+    <span class="text-danger-500 ml-1">*</span>
+    }
+  </label>
+  }
+
+  <!-- Input Container -->
+  <div class="relative">
+    <!-- Left Icon -->
+    @if (leftIcon) {
+    <div
+      class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+    >
+      <lucide-icon
+        [img]="leftIcon"
+        [size]="iconSize()"
+        [class]="leftIconClasses()"
+      ></lucide-icon>
+    </div>
+    }
+
+    <!-- Input Field -->
+    <input
+      [id]="inputId"
+      [type]="computedType()"
+      [placeholder]="placeholder"
+      [disabled]="disabled()"
+      [readonly]="readonly"
+      [autocomplete]="autocomplete"
+      [class]="inputClasses()"
+      [value]="value()"
+      (input)="onInput($event)"
+      (blur)="onBlur()"
+      (focus)="onFocus()"
+      (keyup.enter)="onEnter()"
+    />
+
+    <!-- Right Icon / Password Toggle -->
+    @if (rightIcon || (type === 'password' && showPasswordToggle)) {
+    <button
+      type="button"
+      class="absolute inset-y-0 right-0 pr-3 flex items-center"
+      [class]="rightIconClasses()"
+      (click)="onRightIconClick()"
+      [attr.aria-label]="passwordVisible() ? 'Hide password' : 'Show password'"
+      [disabled]="disabled()"
+    >
+      @if (type === 'password' && showPasswordToggle) {
+      <lucide-icon
+        [img]="passwordVisible() ? eyeOffIcon : eyeIcon"
+        [size]="iconSize()"
+        class="text-text-muted hover:text-text-default"
+      ></lucide-icon>
+      } @else if (rightIcon) {
+      <lucide-icon
+        [img]="rightIcon"
+        [size]="iconSize()"
+        class="text-text-muted hover:text-text-default"
+      ></lucide-icon>
+      }
+    </button>
+    }
+
+    <!-- Loading Spinner -->
+    @if (loading) {
+    <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+      <lucide-icon
+        [img]="loaderIcon"
+        [size]="iconSize()"
+        class="animate-spin text-primary-500"
+      ></lucide-icon>
+    </div>
+    }
+  </div>
+
+  <!-- Password Strength Indicator (for password fields) -->
+  @if (type === 'password' && showPasswordStrength && value()) {
+  <div class="mt-2">
+    <div class="flex space-x-1">
+      @for (i of [1,2,3,4]; track i) {
+      <div
+        class="h-2 flex-1 rounded"
+        [class.bg-danger-400]="passwordStrength >= i && passwordStrength <= 2"
+        [class.bg-warning-400]="passwordStrength === 3 && passwordStrength >= i"
+        [class.bg-success-500]="passwordStrength === 4 && passwordStrength >= i"
+        [class.bg-border-default]="passwordStrength < i"
+      ></div>
+      }
+    </div>
+    <p class="text-xs text-text-muted mt-1">
+      {{ passwordStrengthText }}
+    </p>
+  </div>
+  }
+
+  <!-- Help Text -->
+  @if (helpText && !hasError()) {
+  <p class="text-sm text-text-muted">{{ helpText }}</p>
+  }
+
+  <!-- Error Message(s) -->
+  @if (errorList() && errorList().length > 0) {
+  <ul class="text-sm text-danger-600 space-y-1 mt-1.5">
+    @for (err of errorList(); track err) {
+    <li class="flex items-center">
+      <lucide-icon [img]="alertIcon" [size]="16" class="mr-1"></lucide-icon>
+      {{ err }}
+    </li>
+    }
+  </ul>
+  } @else if (error()) {
+  <p class="text-sm text-danger-600 flex items-center mt-1.5">
+    <lucide-icon [img]="alertIcon" [size]="16" class="mr-1"></lucide-icon>
+    {{ error() }}
+  </p>
+  }
+
+  <!-- Success Message -->
+  @if (success) {
+  <p class="text-sm text-success-600 flex items-center">
+    <lucide-icon [img]="checkIcon" [size]="16" class="mr-1"></lucide-icon>
+    {{ success }}
+  </p>
+  }
+</div>

@@ -163,7 +163,7 @@ func (uc *UseCase) CreateTask(ctx context.Context, userID, boardID bson.ObjectID
 	}
 
 	// Get task with details for response
-	taskDetails, err := uc.getTaskWithDetails(ctx, task.ID, userID)
+	taskDetails, err := uc.getTaskWithDetails(ctx, task.ID)
 	if err != nil {
 		return nil, errors.NewInternalServerError(uc.i18n.T(lang, "errors.internal_error"), err)
 	}
@@ -171,7 +171,7 @@ func (uc *UseCase) CreateTask(ctx context.Context, userID, boardID bson.ObjectID
 	return uc.mapTaskToResponse(taskDetails, userID), nil
 }
 
-func (uc *UseCase) GetBoardTasks(ctx context.Context, userID bson.ObjectID, boardID bson.ObjectID, filter *TaskQueryFilter, lang string) (*utils.Page[*dto.TaskResponse], error) {
+func (uc *UseCase) GetBoardTasks(ctx context.Context, userID, boardID bson.ObjectID, filter *TaskQueryFilter, lang string) (*utils.Page[*dto.TaskResponse], error) {
 	// Check user's access to the board
 	member, err := uc.boardMemberRepo.GetByBoardAndUser(ctx, boardID, userID)
 	if err != nil || !member.IsActive() {
@@ -209,7 +209,7 @@ func (uc *UseCase) GetBoardTasks(ctx context.Context, userID bson.ObjectID, boar
 	return utils.NewPage(taskResponses, &filter.BaseFilter, total), nil
 }
 
-func (uc *UseCase) GetBoardTasksKanban(ctx context.Context, userID bson.ObjectID, boardID bson.ObjectID, lang string) (*dto.TaskKanbanResponse, error) {
+func (uc *UseCase) GetBoardTasksKanban(ctx context.Context, userID, boardID bson.ObjectID, lang string) (*dto.TaskKanbanResponse, error) {
 	// Check user's access to the board
 	member, err := uc.boardMemberRepo.GetByBoardAndUser(ctx, boardID, userID)
 	if err != nil || !member.IsActive() {
@@ -296,7 +296,7 @@ func (uc *UseCase) GetTask(ctx context.Context, userID, taskID bson.ObjectID, la
 	}
 
 	// Get task with details
-	taskDetails, err := uc.getTaskWithDetails(ctx, taskID, userID)
+	taskDetails, err := uc.getTaskWithDetails(ctx, taskID)
 	if err != nil {
 		return nil, errors.NewInternalServerError(uc.i18n.T(lang, "errors.internal_error"), err)
 	}
@@ -400,7 +400,7 @@ func (uc *UseCase) UpdateTask(ctx context.Context, userID, taskID bson.ObjectID,
 	}
 
 	// Get updated task with details
-	taskDetails, err := uc.getTaskWithDetails(ctx, taskID, userID)
+	taskDetails, err := uc.getTaskWithDetails(ctx, taskID)
 	if err != nil {
 		return nil, errors.NewInternalServerError(uc.i18n.T(lang, "errors.internal_error"), err)
 	}
@@ -438,7 +438,7 @@ func (uc *UseCase) UpdateTaskStatus(ctx context.Context, userID, taskID bson.Obj
 	}
 
 	// Get updated task with details
-	taskDetails, err := uc.getTaskWithDetails(ctx, taskID, userID)
+	taskDetails, err := uc.getTaskWithDetails(ctx, taskID)
 	if err != nil {
 		return nil, errors.NewInternalServerError(uc.i18n.T(lang, "errors.internal_error"), err)
 	}
@@ -446,7 +446,7 @@ func (uc *UseCase) UpdateTaskStatus(ctx context.Context, userID, taskID bson.Obj
 	return uc.mapTaskToResponse(taskDetails, userID), nil
 }
 
-func (uc *UseCase) UpdateTaskPosition(ctx context.Context, userID bson.ObjectID, taskID bson.ObjectID, req *dto.UpdateTaskPositionRequest, lang string) (*dto.TaskResponse, error) {
+func (uc *UseCase) UpdateTaskPosition(ctx context.Context, userID, taskID bson.ObjectID, req *dto.UpdateTaskPositionRequest, lang string) (*dto.TaskResponse, error) {
 	// Get task
 	task, err := uc.taskRepo.GetByID(ctx, taskID)
 	if err != nil {
@@ -474,7 +474,7 @@ func (uc *UseCase) UpdateTaskPosition(ctx context.Context, userID bson.ObjectID,
 	}
 
 	// Get updated task with details
-	taskDetails, err := uc.getTaskWithDetails(ctx, taskID, userID)
+	taskDetails, err := uc.getTaskWithDetails(ctx, taskID)
 	if err != nil {
 		return nil, errors.NewInternalServerError(uc.i18n.T(lang, "errors.internal_error"), err)
 	}
@@ -526,7 +526,7 @@ func (uc *UseCase) AssignTask(ctx context.Context, userID, taskID bson.ObjectID,
 	}
 
 	// Get updated task with details
-	taskDetails, err := uc.getTaskWithDetails(ctx, taskID, userID)
+	taskDetails, err := uc.getTaskWithDetails(ctx, taskID)
 	if err != nil {
 		return nil, errors.NewInternalServerError(uc.i18n.T(lang, "errors.internal_error"), err)
 	}
@@ -534,7 +534,7 @@ func (uc *UseCase) AssignTask(ctx context.Context, userID, taskID bson.ObjectID,
 	return uc.mapTaskToResponse(taskDetails, userID), nil
 }
 
-func (uc *UseCase) ArchiveTask(ctx context.Context, userID bson.ObjectID, taskID bson.ObjectID, lang string) error {
+func (uc *UseCase) ArchiveTask(ctx context.Context, userID, taskID bson.ObjectID, lang string) error {
 	// Get task
 	task, err := uc.taskRepo.GetByID(ctx, taskID)
 	if err != nil {
@@ -564,7 +564,7 @@ func (uc *UseCase) ArchiveTask(ctx context.Context, userID bson.ObjectID, taskID
 	return nil
 }
 
-func (uc *UseCase) RestoreTask(ctx context.Context, userID bson.ObjectID, taskID bson.ObjectID, lang string) error {
+func (uc *UseCase) RestoreTask(ctx context.Context, userID, taskID bson.ObjectID, lang string) error {
 	// Get task
 	task, err := uc.taskRepo.GetByID(ctx, taskID)
 	if err != nil {
@@ -657,7 +657,7 @@ func (uc *UseCase) GetMyTasks(ctx context.Context, userID bson.ObjectID, filter 
 
 		if hasAccess {
 			// Get task with full details
-			taskDetail, err := uc.getTaskWithDetails(ctx, task.ID, userID)
+			taskDetail, err := uc.getTaskWithDetails(ctx, task.ID)
 			if err != nil {
 				// Log error but continue with other tasks
 				continue
@@ -674,58 +674,12 @@ func (uc *UseCase) GetMyTasks(ctx context.Context, userID bson.ObjectID, filter 
 	return utils.NewPage(taskResponses, &filter.BaseFilter, accessibleTotal), nil
 }
 
-func (uc *UseCase) getTaskWithDetails(ctx context.Context, taskID bson.ObjectID, userID bson.ObjectID) (*repositories.TaskWithDetails, error) {
+func (uc *UseCase) getTaskWithDetails(ctx context.Context, taskID bson.ObjectID) (*repositories.TaskWithDetails, error) {
 	// Get task with basic details
-	tasksWithDetails, err := uc.taskRepo.GetTasksWithDetails(ctx, bson.NilObjectID, repositories.TaskFilter{
-		Page:  1,
-		Limit: 1,
-	})
+	taskWithDetails, err := uc.taskRepo.GetTaskWithDetails(ctx, taskID)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, taskDetail := range tasksWithDetails {
-		if taskDetail.Task.ID == taskID {
-			return taskDetail, nil
-		}
-	}
-
-	task, err := uc.taskRepo.GetByID(ctx, taskID)
-	if err != nil {
-		return nil, err
-	}
-
-	taskDetail := &repositories.TaskWithDetails{
-		Task: task,
-	}
-
-	if board, err := uc.boardRepo.GetByID(ctx, task.BoardID); err == nil {
-		taskDetail.Board = board
-	}
-
-	if task.CategoryID != nil {
-		if category, err := uc.categoryRepo.GetByID(ctx, *task.CategoryID); err == nil {
-			taskDetail.Category = category
-		}
-	}
-
-	if task.AssignedTo != nil {
-		if user, err := uc.userRepo.GetByID(ctx, *task.AssignedTo); err == nil {
-			taskDetail.AssignedUser = user
-		}
-	}
-
-	if user, err := uc.userRepo.GetByID(ctx, task.CreatedBy); err == nil {
-		taskDetail.Creator = user
-	}
-
-	if user, err := uc.userRepo.GetByID(ctx, *task.LastEditedBy); err == nil {
-		taskDetail.LastEditor = user
-	}
-
-	if count, err := uc.commentRepo.CountByTask(ctx, taskID); err == nil {
-		taskDetail.CommentCount = count
-	}
-
-	return taskDetail, nil
+	return taskWithDetails, nil
 }

@@ -1,0 +1,52 @@
+<div class="fixed bottom-4 right-4 z-50 space-y-2">
+  @for (toast of toastService.toasts(); track toast.id) {
+  <div
+    class="max-w-sm w-full bg-white dark:bg-neutral-800 shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 border-l-4 animate-slide-up"
+    [ngClass]="{
+      'border-l-success-500': toast.type === 'success',
+      'border-l-danger-500': toast.type === 'error',
+      'border-l-warning-500': toast.type === 'warning',
+      'border-l-secondary-500': toast.type === 'info'
+    }"
+  >
+    <div class="p-4">
+      <div class="flex items-start">
+        <div class="flex-shrink-0">
+          @switch (toast.type) { @case ('success') {
+          <lucide-icon [img]="CheckCircle" class="text-success-500" size="20" />
+          } @case ('error') {
+          <lucide-icon [img]="AlertCircle" class="text-danger-500" size="20" />
+          } @case ('warning') {
+          <lucide-icon
+            [img]="AlertTriangle"
+            class="text-warning-500"
+            size="20"
+          />
+          } @case ('info') {
+          <lucide-icon [img]="Info" class="text-secondary-500" size="20" />
+          } }
+        </div>
+        <div class="ml-3 w-0 flex-1">
+          <p class="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+            {{ toast.title }}
+          </p>
+          @if (toast.message) {
+          <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+            {{ toast.message }}
+          </p>
+          }
+        </div>
+        <div class="ml-4 flex-shrink-0 flex">
+          <button
+            type="button"
+            class="rounded-md inline-flex text-neutral-400 hover:text-neutral-500 dark:hover:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+            (click)="removeToast(toast.id)"
+          >
+            <lucide-icon [img]="X" size="16" />
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  }
+</div>

@@ -20,7 +20,8 @@
       "@store/*": ["src/app/store/*"],
       "@shared/*": ["src/app/shared/*"],
       "@features/*": ["src/app/features/*"],
-      "@environments/*": ["environments/*"]
+      "@environments/*": ["environments/*"],
+      "@i18n/*": ["app/i18n/*"]
     }
   },
   "angularCompilerOptions": {

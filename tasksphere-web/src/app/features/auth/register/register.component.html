@@ -1,0 +1,397 @@
+<div
+  class="min-h-screen flex items-center justify-center bg-background py-0 px-4 sm:px-6 lg:px-8"
+>
+  <div class="max-w-md w-full space-y-6">
+    <!-- Header -->
+    <div class="text-center">
+      <h2 class="text-2xl font-semibold text-text-default">
+        {{ t.translate("auth.createAccount") }}
+      </h2>
+      <p class="mt-2 text-sm text-text-muted">
+        {{ t.translate("auth.alreadyHaveAccount") }}
+        <a
+          routerLink="/auth/login"
+          class="font-medium text-primary-600 hover:text-primary-500 transition-colors"
+        >
+          {{ t.translate("auth.login") }}
+        </a>
+      </p>
+    </div>
+
+    <!-- Error Alert -->
+    @if (authStore.hasError()) {
+    <div
+      class="bg-danger-50 border border-danger-200 rounded-lg p-4 animate-slide-up"
+    >
+      <div class="flex items-center">
+        <lucide-icon
+          [img]="AlertCircle"
+          [size]="20"
+          class="text-danger-500 mr-3"
+        ></lucide-icon>
+        <p class="text-sm text-danger-700">{{ authStore.error() }}</p>
+      </div>
+    </div>
+    }
+
+    <!-- Register Form -->
+    <form
+      [formGroup]="registerForm"
+      (ngSubmit)="onSubmit()"
+      class="mt-8 space-y-6"
+    >
+      <!-- Name Fields Row -->
+      <div class="grid grid-cols-2 gap-4">
+        <!-- First Name -->
+        <div>
+          <label
+            for="firstName"
+            class="block text-sm font-medium text-text-default mb-2"
+          >
+            {{ t.translate("auth.firstName") }}
+          </label>
+          <div class="relative">
+            <div
+              class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+            >
+              <lucide-icon
+                [img]="User"
+                [size]="18"
+                class="text-text-muted"
+              ></lucide-icon>
+            </div>
+            <input
+              id="firstName"
+              name="firstName"
+              type="text"
+              autocomplete="given-name"
+              required
+              formControlName="firstName"
+              class="input-default pl-10"
+              [class.border-danger-500]="isFieldInvalid('firstName')"
+              [placeholder]="t.translate('auth.firstName')"
+            />
+          </div>
+          @if (isFieldInvalid('firstName')) {
+          <p class="mt-1 text-sm text-danger-600">
+            @if (registerForm.get('firstName')?.errors?.['required']) {
+            {{ t.translate("auth.firstNameRequired") }}
+            } @if (registerForm.get('firstName')?.errors?.['minlength']) {
+            {{ t.translate("auth.firstNameMinLength") }}
+            }
+          </p>
+          }
+        </div>
+
+        <!-- Last Name -->
+        <div>
+          <label
+            for="lastName"
+            class="block text-sm font-medium text-text-default mb-2"
+          >
+            {{ t.translate("auth.lastName") }}
+          </label>
+          <input
+            id="lastName"
+            name="lastName"
+            type="text"
+            autocomplete="family-name"
+            required
+            formControlName="lastName"
+            class="input-default"
+            [class.border-danger-500]="isFieldInvalid('lastName')"
+            [placeholder]="t.translate('auth.lastName')"
+          />
+          @if (isFieldInvalid('lastName')) {
+          <p class="mt-1 text-sm text-danger-600">
+            @if (registerForm.get('lastName')?.errors?.['required']) {
+            {{ t.translate("auth.lastNameRequired") }}
+            } @if (registerForm.get('lastName')?.errors?.['minlength']) {
+            {{ t.translate("auth.lastNameMinLength") }}
+            }
+          </p>
+          }
+        </div>
+      </div>
+
+      <!-- Email Field -->
+      <div>
+        <label
+          for="email"
+          class="block text-sm font-medium text-text-default mb-2"
+        >
+          {{ t.translate("auth.email") }}
+        </label>
+        <div class="relative">
+          <div
+            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+          >
+            <lucide-icon
+              [img]="Mail"
+              [size]="18"
+              class="text-text-muted"
+            ></lucide-icon>
+          </div>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autocomplete="email"
+            required
+            formControlName="email"
+            class="input-default pl-10"
+            [class.border-danger-500]="isFieldInvalid('email')"
+            [placeholder]="t.translate('auth.email')"
+          />
+        </div>
+        @if (isFieldInvalid('email')) {
+        <p class="mt-1 text-sm text-danger-600">
+          @if (registerForm.get('email')?.errors?.['required']) {
+          {{ t.translate("auth.emailRequired") }}
+          } @if (registerForm.get('email')?.errors?.['email']) {
+          {{ t.translate("auth.emailInvalid") }}
+          }
+        </p>
+        }
+      </div>
+
+      <!-- Password Field -->
+      <div>
+        <label
+          for="password"
+          class="block text-sm font-medium text-text-default mb-2"
+        >
+          {{ t.translate("auth.password") }}
+        </label>
+        <div class="relative">
+          <div
+            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+          >
+            <lucide-icon
+              [img]="Lock"
+              [size]="18"
+              class="text-text-muted"
+            ></lucide-icon>
+          </div>
+          <input
+            id="password"
+            name="password"
+            [type]="showPassword() ? 'text' : 'password'"
+            autocomplete="new-password"
+            required
+            formControlName="password"
+            class="input-default pl-10 pr-10"
+            [class.border-danger-500]="isFieldInvalid('password')"
+            [placeholder]="t.translate('auth.password')"
+          />
+          <button
+            type="button"
+            class="absolute inset-y-0 right-0 pr-3 flex items-center"
+            (click)="togglePasswordVisibility()"
+            [attr.aria-label]="
+              showPassword() ? 'Hide password' : 'Show password'
+            "
+          >
+            @if (showPassword()) {
+            <lucide-icon
+              [img]="EyeOff"
+              [size]="18"
+              class="text-text-muted hover:text-text-default"
+            ></lucide-icon>
+            } @else {
+            <lucide-icon
+              [img]="Eye"
+              [size]="18"
+              class="text-text-muted hover:text-text-default"
+            ></lucide-icon>
+            }
+          </button>
+        </div>
+
+        <!-- Password Strength Indicator -->
+        @if (registerForm.get('password')?.value) {
+        <div class="mt-2">
+          <div class="flex space-x-1">
+            @for (item of [1,2,3,4]; track item) {
+            <div
+              class="h-2 flex-1 rounded"
+              [class]="getPasswordStrengthColor(item)"
+            ></div>
+            }
+          </div>
+          <p class="text-xs text-text-muted mt-1">
+            {{ t.translate("auth.passwordStrength") }}:
+            {{ getPasswordStrengthText() }}
+          </p>
+        </div>
+        } @if (isFieldInvalid('password')) {
+        <p class="mt-1 text-sm text-danger-600">
+          @if (registerForm.get('password')?.errors?.['required']) {
+          {{ t.translate("auth.passwordRequired") }}
+          } @if (registerForm.get('password')?.errors?.['minlength']) {
+          {{ t.translate("auth.passwordMinLength") }}
+          } @if (registerForm.get('password')?.errors?.['pattern']) {
+          {{ t.translate("auth.passwordPattern") }}
+          }
+        </p>
+        }
+      </div>
+
+      <!-- Confirm Password Field -->
+      <div>
+        <label
+          for="confirmPassword"
+          class="block text-sm font-medium text-text-default mb-2"
+        >
+          {{ t.translate("auth.confirmPassword") }}
+        </label>
+        <div class="relative">
+          <div
+            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+          >
+            <lucide-icon
+              [img]="Lock"
+              [size]="18"
+              class="text-text-muted"
+            ></lucide-icon>
+          </div>
+          <input
+            id="confirmPassword"
+            name="confirmPassword"
+            [type]="showConfirmPassword() ? 'text' : 'password'"
+            autocomplete="new-password"
+            required
+            formControlName="confirmPassword"
+            class="input-default pl-10 pr-10"
+            [class.border-danger-500]="isFieldInvalid('confirmPassword') || registerForm.errors?.['passwordMismatch']"
+            [class.border-success-500]="
+              registerForm.get('confirmPassword')?.valid &&
+              registerForm.get('confirmPassword')?.value
+            "
+            [placeholder]="t.translate('auth.confirmPassword')"
+          />
+          <button
+            type="button"
+            class="absolute inset-y-0 right-0 pr-3 flex items-center"
+            (click)="toggleConfirmPasswordVisibility()"
+            [attr.aria-label]="
+              showConfirmPassword() ? 'Hide password' : 'Show password'
+            "
+          >
+            @if (registerForm.get('confirmPassword')?.valid &&
+            registerForm.get('confirmPassword')?.value &&
+            !registerForm.errors?.['passwordMismatch']) {
+            <lucide-icon
+              [img]="Check"
+              [size]="18"
+              class="text-success-500"
+            ></lucide-icon>
+            } @else if (showConfirmPassword()) {
+            <lucide-icon
+              [img]="EyeOff"
+              [size]="18"
+              class="text-text-muted hover:text-text-default"
+            ></lucide-icon>
+            } @else {
+            <lucide-icon
+              [img]="Eye"
+              [size]="18"
+              class="text-text-muted hover:text-text-default"
+            ></lucide-icon>
+            }
+          </button>
+        </div>
+        @if (isFieldInvalid('confirmPassword') ||
+        registerForm.errors?.['passwordMismatch']) {
+        <p class="mt-1 text-sm text-danger-600">
+          @if (registerForm.get('confirmPassword')?.errors?.['required']) {
+          {{ t.translate("auth.confirmPasswordRequired") }}
+          } @if (registerForm.errors?.['passwordMismatch']) {
+          {{ t.translate("auth.passwordMismatch") }}
+          }
+        </p>
+        }
+      </div>
+
+      <!-- Language Selection -->
+      <div>
+        <label
+          for="language"
+          class="block text-sm font-medium text-text-default mb-2"
+        >
+          {{ t.translate("common.language") }}
+        </label>
+        <select id="language" formControlName="language" class="input-field">
+          <option value="en">English</option>
+          <option value="fr">Français</option>
+        </select>
+      </div>
+
+      <!-- Terms and Conditions -->
+      <div class="flex items-start">
+        <input
+          id="acceptTerms"
+          type="checkbox"
+          formControlName="acceptTerms"
+          class="h-4 w-4 mt-1 text-primary-600 focus:ring-primary-500 border-border-default rounded"
+        />
+        <label for="acceptTerms" class="ml-3 text-sm text-text-default">
+          {{ t.translate("auth.iAgreeToThe") }}
+          <a href="#" class="text-primary-600 hover:text-primary-500">{{
+            t.translate("auth.termsOfService")
+          }}</a>
+          {{ t.translate("common.and") }}
+          <a href="#" class="text-primary-600 hover:text-primary-500">{{
+            t.translate("auth.privacyPolicy")
+          }}</a>
+        </label>
+      </div>
+      @if (isFieldInvalid('acceptTerms')) {
+      <p class="text-sm text-danger-600">
+        {{ t.translate("auth.termsRequired") }}
+      </p>
+      }
+
+      <!-- Submit Button -->
+      <button
+        type="submit"
+        [disabled]="registerForm.invalid || authStore.isLoading()"
+        class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+      >
+        @if (authStore.isLoading()) {
+        <lucide-icon
+          [img]="Loader2"
+          [size]="18"
+          class="animate-spin mr-2"
+        ></lucide-icon>
+        } @else {
+        <lucide-icon [img]="UserPlus" [size]="18" class="mr-2"></lucide-icon>
+        }
+        {{ t.translate("auth.createAccount") }}
+      </button>
+
+      <!-- Divider -->
+      <div class="relative my-6">
+        <div class="absolute inset-0 flex items-center">
+          <div class="w-full border-t border-border-default"></div>
+        </div>
+        <div class="relative flex justify-center text-sm">
+          <span class="px-2 bg-background text-text-muted">{{
+            t.translate("common.or")
+          }}</span>
+        </div>
+      </div>
+
+      <!-- Google OAuth Button -->
+      <button
+        type="button"
+        (click)="onGoogleRegister()"
+        [disabled]="authStore.isLoading()"
+        class="w-full flex justify-center items-center py-3 px-4 border border-border-default text-sm font-medium rounded-lg text-text-default bg-surface hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+      >
+        <lucide-icon [img]="Chrome" [size]="18" class="mr-2"></lucide-icon>
+        {{ t.translate("auth.signUpWithGoogle") }}
+      </button>
+    </form>
+  </div>
+</div>

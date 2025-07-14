@@ -193,7 +193,7 @@ func (h *BoardHandler) GetBoardStats(c *fiber.Ctx) error {
 		return errors.NewBadRequestError(h.localizer.T(lang, "errors.invalid_board_id"))
 	}
 
-	response, err := h.boardUseCase.GetBoardStats(c.Context(), boardID, userID, lang)
+	response, err := h.boardUseCase.GetBoardStats(c.Context(), userID, boardID, lang)
 	if err != nil {
 		return err
 	}

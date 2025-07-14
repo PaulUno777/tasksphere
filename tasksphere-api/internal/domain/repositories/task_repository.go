@@ -46,6 +46,7 @@ type TaskRepository interface {
 	UpdateAssignment(ctx context.Context, taskID bson.ObjectID, assignedTo *bson.ObjectID, userID bson.ObjectID) error
 	GetTasksForKanban(ctx context.Context, boardID bson.ObjectID) (map[entities.TaskStatus][]*entities.Task, error)
 	GetOverdueTasks(ctx context.Context, boardID bson.ObjectID) ([]*entities.Task, error)
+	GetTaskWithDetails(ctx context.Context, taskID bson.ObjectID) (*TaskWithDetails, error)
 	GetTasksWithDetails(ctx context.Context, boardID bson.ObjectID, filter TaskFilter) ([]*TaskWithDetails, error)
 	CountByBoard(ctx context.Context, boardID bson.ObjectID, status entities.TaskStatus) (int64, error)
 	CountByCategory(ctx context.Context, categoryID bson.ObjectID) (int64, error)

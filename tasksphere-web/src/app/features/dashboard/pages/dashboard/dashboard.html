@@ -1,0 +1,244 @@
+<div class="min-h-screen bg-background ">
+  <!-- Main Content -->
+  <div class="container-responsive py-4 space-y-6 mx-4">
+    <!-- Welcome Header -->
+    <app-welcome-header
+      [user]="authStore.user()"
+      [isLoading]="dashboardStore.isInitialLoading()"
+      (refresh)="onRefresh()"
+    />
+
+    <!-- Error State -->
+    @if (dashboardStore.hasError() && !dashboardStore.hasData()) {
+    <div class="card p-8 text-center">
+      <div
+        class="w-16 h-16 bg-danger-100 rounded-full flex items-center justify-center mx-auto mb-4"
+      >
+        <lucide-icon
+          [img]="AlertTriangle"
+          [size]="32"
+          class="text-danger-600"
+        ></lucide-icon>
+      </div>
+      <h3 class="text-lg font-semibold text-text-default mb-2">
+        {{
+          i18n.translate('dashboard.loadError') ||
+            'Failed to load dashboard'
+        }}
+      </h3>
+      <p class="text-text-muted mb-4">
+        {{ dashboardStore.error() }}
+      </p>
+      <button
+        type="button"
+        (click)="onRefresh()"
+        class="btn-primary btn-md"
+        [disabled]="dashboardStore.isLoading()"
+      >
+        <lucide-icon
+          [img]="RefreshCw"
+          [size]="16"
+          class="mr-2"
+        ></lucide-icon>
+        {{ i18n.translate('common.retry') || 'Try Again' }}
+      </button>
+    </div>
+    }
+
+    <!-- Dashboard Content -->
+    @if (dashboardStore.hasData()) {
+    <div class="space-y-4 mt-4">
+      <!-- Quick Actions -->
+      <app-quick-actions
+        [actions]="dashboardStore.availableQuickActions()"
+        [isLoading]="dashboardStore.isInitialLoading()"
+      />
+
+      <!-- Statistics Overview -->
+      <app-dashboard-stats
+        [stats]="dashboardStore.stats()"
+        [isLoading]="dashboardStore.isInitialLoading()"
+        [selectedPeriod]="dashboardStore.selectedPeriod()"
+        (periodChange)="onPeriodChange($event)"
+      />
+
+      <!-- Main Dashboard Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left Column - Tasks Overview -->
+        <div class="lg:col-span-2 space-y-6">
+          <!-- Tasks Overview -->
+          <app-tasks-overview
+            [tasksDueToday]="dashboardStore.tasksDueToday()"
+            [overdueTasks]="dashboardStore.overdueTasks()"
+            [urgentTasks]="dashboardStore.urgentTasks()"
+            [showCompleted]="dashboardStore.showCompletedTasks()"
+            [isLoading]="dashboardStore.isInitialLoading()"
+            (toggleCompleted)="onToggleCompletedTasks()"
+            (taskComplete)="onTaskComplete($event)"
+          />
+
+          <!-- Recent Boards -->
+          <app-recent-boards
+            [boards]="dashboardStore.recentBoards()"
+            [summary]="dashboardStore.recentBoardsSummary()"
+            [isLoading]="dashboardStore.isInitialLoading()"
+          />
+        </div>
+
+        <!-- Right Column - Activity Feed -->
+        <div class="space-y-6">
+          <!-- Activity Feed -->
+          <app-activity-feed
+            [activities]="dashboardStore.recentActivity()"
+            [unreadCount]="dashboardStore.unreadActivityCount()"
+            [isLoading]="dashboardStore.isInitialLoading()"
+            (markAsRead)="onMarkActivityAsRead($event)"
+            (markAllAsRead)="onMarkAllActivityAsRead()"
+          />
+
+          <!-- Performance Insights -->
+          @if (dashboardStore.dashboardSummary()) {
+          <div class="card">
+            <div class="card-header">
+              <h3
+                class="text-lg font-semibold text-text-default flex items-center"
+              >
+                <lucide-icon
+                  [img]="BarChart3"
+                  [size]="20"
+                  class="mr-2 text-primary-600"
+                ></lucide-icon>
+                {{ i18n.translate('dashboard.insights') || 'Insights' }}
+              </h3>
+            </div>
+            <div class="card-body space-y-4">
+              @let summary = dashboardStore.dashboardSummary();
+
+              <!-- Productivity Level -->
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-text-muted">
+                  {{
+                    i18n.translate('dashboard.productivity') ||
+                      'Productivity'
+                  }}
+                </span>
+                <span
+                  class="badge badge-sm"
+                  [class.badge-success]="summary?.productivity === 'high'"
+                  [class.badge-warning]="summary?.productivity === 'medium'"
+                  [class.badge-danger]="summary?.productivity === 'low'"
+                >
+                  {{
+                    i18n.translate(
+                      'dashboard.productivity.' + summary?.productivity
+                    ) || summary?.productivity
+                  }}
+                </span>
+              </div>
+
+              <!-- Workload -->
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-text-muted">
+                  {{ i18n.translate('dashboard.workload') || 'Workload' }}
+                </span>
+                <span
+                  class="badge badge-sm"
+                  [class.badge-danger]="summary?.workload === 'heavy'"
+                  [class.badge-warning]="summary?.workload === 'moderate'"
+                  [class.badge-success]="summary?.workload === 'light'"
+                >
+                  {{
+                    i18n.translate(
+                      'dashboard.workload.' + summary?.workload
+                    ) || summary?.workload
+                  }}
+                </span>
+              </div>
+
+              <!-- Engagement -->
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-text-muted">
+                  {{
+                    i18n.translate('dashboard.engagement') || 'Engagement'
+                  }}
+                </span>
+                <span
+                  class="badge badge-sm"
+                  [class.badge-success]="summary?.engagement === 'high'"
+                  [class.badge-primary]="summary?.engagement === 'medium'"
+                >
+                  {{
+                    i18n.translate(
+                      'dashboard.engagement.' + summary?.engagement
+                    ) || summary?.engagement
+                  }}
+                </span>
+              </div>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+
+      <!-- Refresh Indicator -->
+      @if (dashboardStore.isRefreshing()) {
+      <div
+        class="fixed bottom-4 right-4 bg-primary-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2"
+      >
+        <lucide-icon
+          [img]="RefreshCw"
+          [size]="16"
+          class="animate-spin"
+        ></lucide-icon>
+        <span class="text-sm">{{
+          i18n.translate('dashboard.refreshing') || 'Refreshing...'
+        }}</span>
+      </div>
+      }
+    </div>
+    }
+
+    <!-- Initial Loading State -->
+    @if (dashboardStore.isInitialLoading()) {
+    <div class="space-y-6">
+      <!-- Loading skeleton -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        @for (i of [1,2,3,4]; track i) {
+        <div class="card p-6">
+          <div class="skeleton h-4 w-16 mb-2"></div>
+          <div class="skeleton h-8 w-20 mb-1"></div>
+          <div class="skeleton h-3 w-24"></div>
+        </div>
+        }
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 space-y-6">
+          <div class="card p-6">
+            <div class="skeleton h-6 w-32 mb-4"></div>
+            @for (i of [1,2,3]; track i) {
+            <div class="flex items-center space-x-3 mb-3">
+              <div class="skeleton w-4 h-4 rounded"></div>
+              <div class="skeleton h-4 flex-1"></div>
+            </div>
+            }
+          </div>
+        </div>
+
+        <div class="card p-6">
+          <div class="skeleton h-6 w-24 mb-4"></div>
+          @for (i of [1,2,3,4]; track i) {
+          <div class="flex items-center space-x-3 mb-3">
+            <div class="skeleton w-8 h-8 rounded-full"></div>
+            <div class="flex-1">
+              <div class="skeleton h-3 w-full mb-1"></div>
+              <div class="skeleton h-3 w-3/4"></div>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+    }
+  </div>
+</div>
